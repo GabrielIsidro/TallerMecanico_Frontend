@@ -1,68 +1,98 @@
+/* index.css (Estilos raíz de la aplicación) */
+
+/* --- VARIABLES Y CONFIGURACIÓN GLOBAL (:root) --- 
+ * :root selecciona el elemento raíz (<html>). Es el mejor lugar 
+ * para definir configuraciones que afectan a toda la página.
+ */
 :root {
+  /* Tipografía del sistema: Usa la fuente por defecto del sistema operativo del usuario.
+   * Esto hace que la app se sienta nativa y carga súper rápido. */
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
+  /* Magia del modo oscuro: Le dice al navegador que esta app soporta 
+   * tanto tema claro como oscuro, adaptando controles nativos (como scrollbars). */
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  
+  /* Colores por defecto (Tema Oscuro por defecto en este bloque) */
+  color: rgba(255, 255, 255, 0.87); /* Texto blanco ligeramente transparente para no cansar la vista */
+  background-color: #242424; /* Fondo gris oscuro */
 
+  /* Optimizaciones de renderizado de texto: 
+   * Hace que las fuentes se vean más nítidas y suaves en diferentes pantallas 
+   * (especialmente en monitores de alta resolución o Mac). */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- ENLACES (Links) --- */
 a {
   font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+  color: #646cff; /* Azul púrpura para los links */
+  text-decoration: inherit; /* Quita el subrayado clásico por defecto */
 }
 a:hover {
-  color: #535bf2;
+  color: #535bf2; /* Se vuelve un poco más claro al pasar el mouse */
 }
 
+/* --- CUERPO DEL DOCUMENTO (Body) --- */
 body {
   margin: 0;
+  /* Centrado absoluto rápido: flex y place-items: center 
+   * centran cualquier contenido directo del body tanto vertical como horizontalmente. */
   display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  place-items: center; 
+  min-width: 320px; /* Evita que la app se rompa en pantallas de celulares muy pequeños */
+  min-height: 100vh; /* Asegura que el fondo cubra siempre toda la pantalla */
 }
 
+/* --- ENCABEZADOS --- */
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
 
+/* --- BOTONES GLOBALES --- */
 button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
   font-size: 1em;
   font-weight: 500;
-  font-family: inherit;
+  font-family: inherit; /* Hereda la tipografía del sistema configurada en :root */
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s; /* Transición suave solo en el borde */
 }
+
+/* Efecto hover general para botones */
 button:hover {
-  border-color: #646cff;
+  border-color: #646cff; /* Aparece un borde azul al pasar el mouse */
 }
+
+/* Accesibilidad: Estilos para cuando el botón se selecciona con la tecla TAB 
+ * (muy importante para poder navegar el sistema usando solo el teclado). */
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+/* --- TEMA CLARO (Media Query) --- 
+ * Si el sistema operativo del usuario está configurado en "Modo Claro",
+ * estas reglas sobreescriben los colores oscuros definidos arriba en el :root.
+ */
 @media (prefers-color-scheme: light) {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color: #213547; /* Texto oscuro */
+    background-color: #ffffff; /* Fondo blanco */
   }
   a:hover {
-    color: #747bff;
+    color: #747bff; /* Ajuste del hover del link para que contraste mejor en blanco */
   }
   button {
-    background-color: #f9f9f9;
+    background-color: #f9f9f9; /* Botones más claros */
   }
 }

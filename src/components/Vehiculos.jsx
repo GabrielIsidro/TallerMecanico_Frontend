@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner' // <--- 1. IMPORTAMOS TOAST
 
 function Vehiculos() {
   const [vehiculos, setVehiculos] = useState([])
@@ -6,6 +7,7 @@ function Vehiculos() {
   const [modoEdicion, setModoEdicion] = useState(false)
   const [idEditar, setIdEditar] = useState(null)
   const [busqueda, setBusqueda] = useState('')
+  const [mostrarAyudaCat, setMostrarAyudaCat] = useState(false)
 
   const [nuevoAuto, setNuevoAuto] = useState({
     patente: '',
@@ -41,11 +43,11 @@ function Vehiculos() {
 
   const manejarGuardado = () => {
     if(!nuevoAuto.patente || !nuevoAuto.modelo) {
-        alert("Por favor completa Patente y Modelo");
+        // <--- REEMPLAZO DE ALERT POR TOAST DE ADVERTENCIA --->
+        toast.warning("Por favor completa Patente y Modelo");
         return;
     }
 
-    // MAGIA AQUÍ: Convertimos los KM a números o los dejamos en 'null' si están vacíos
     const autoAEnviar = {
         ...nuevoAuto,
         kilometraje: nuevoAuto.kilometraje ? parseInt(nuevoAuto.kilometraje) : null,
@@ -56,6 +58,9 @@ function Vehiculos() {
     const url = modoEdicion ? `http://localhost:8080/api/vehiculos/${idEditar}` : 'http://localhost:8080/api/vehiculos';
     const metodo = modoEdicion ? 'PUT' : 'POST';
 
+    // Lanzamos un toast de "Cargando" mientras espera a Java
+    const toastId = toast.loading(modoEdicion ? "Actualizando vehículo..." : "Guardando vehículo...");
+
     fetch(url, {
         method: metodo,
         headers: { 'Content-Type': 'application/json' },
@@ -63,29 +68,19 @@ function Vehiculos() {
     })
     .then(async (res) => {
         if (!res.ok) throw new Error("Error del servidor");
-        alert(modoEdicion ? "¡Actualizado!" : "¡Guardado!");
+        
+        // <--- ACTUALIZAMOS EL TOAST A ÉXITO --->
+        toast.success(modoEdicion ? "¡Vehículo actualizado correctamente!" : "¡Vehículo registrado con éxito!", {
+            id: toastId, // Le pasamos el ID para que reemplace al de "Cargando..."
+        });
+        
         terminarEdicion();
         cargarVehiculos();
     })
-    .catch(err => alert("⚠️ Error al guardar el vehículo."));
-  }
-
-  const manejarActualizacion = () => {
-    
-
-    const url = modoEdicion ? `http://localhost:8080/api/vehiculos/${idEditar}` : 'http://localhost:8080/api/vehiculos';
-    const metodo = modoEdicion ? 'PUT' : 'POST';
-
-    fetch(url, {
-        method: metodo,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoAuto)
-    })
-    .then(() => {
-        alert(modoEdicion ? "¡Actualizado!" : "¡Guardado!");
-        terminarEdicion();
-        cargarVehiculos();
-    })
+    .catch(err => {
+        // <--- ACTUALIZAMOS EL TOAST A ERROR --->
+        toast.error("Hubo un error al guardar el vehículo.", { id: toastId });
+    });
   }
 
   const iniciarEdicion = (auto) => {
@@ -106,9 +101,17 @@ function Vehiculos() {
   }
 
   const eliminarVehiculo = (id) => {
-    if(!confirm("¿Borrar vehículo?")) return;
+    if(!confirm("¿Estás seguro de que deseas borrar este vehículo?")) return;
+    
     fetch(`http://localhost:8080/api/vehiculos/${id}`, { method: 'DELETE' })
-    .then(() => cargarVehiculos())
+    .then((res) => {
+        if (!res.ok) throw new Error("Error al borrar");
+        toast.success("Vehículo eliminado del sistema.");
+        cargarVehiculos();
+    })
+    .catch(err => {
+        toast.error("No se puede borrar. Revisa que no tenga historial asociado.");
+    })
   }
 
   const terminarEdicion = () => {
@@ -134,7 +137,6 @@ function Vehiculos() {
       return <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em' }}>✅ Al día</span>;
   }
 
-  // Lógica de filtrado (AHORA TAMBIÉN BUSCA POR ID)
   const vehiculosFiltrados = vehiculos.filter(v => {
       const termino = busqueda.toLowerCase();
       const idString = v.id.toString();
@@ -144,6 +146,11 @@ function Vehiculos() {
   });
 
   const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#333', width: '100%', boxSizing: 'border-box' }
+
+  const modalStyle = {
+    position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+  }
 
   return (
     <div style={{ color: '#333' }}>
@@ -166,11 +173,20 @@ function Vehiculos() {
           <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Marca</label><input value={nuevoAuto.marca} onChange={e => setNuevoAuto({...nuevoAuto, marca: e.target.value})} style={inputStyle} /></div>
           <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Modelo</label><input value={nuevoAuto.modelo} onChange={e => setNuevoAuto({...nuevoAuto, modelo: e.target.value})} style={inputStyle} /></div>
           <div>
-              <label style={{fontSize:'0.85em', fontWeight:'bold'}}>Categoría</label>
+              <label style={{fontSize:'0.85em', fontWeight:'bold', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  Categoría
+                  <button 
+                    onClick={() => setMostrarAyudaCat(true)} 
+                    style={{ background:'#3b82f6', color:'white', border:'none', borderRadius:'50%', width:'18px', height:'18px', fontSize:'11px', cursor:'pointer', display:'flex', justifyContent:'center', alignItems:'center', fontWeight:'bold' }} 
+                    title="Ver referencias de ATAIA"
+                  >
+                    ?
+                  </button>
+              </label>
               <select value={nuevoAuto.categoria} onChange={e => setNuevoAuto({...nuevoAuto, categoria: e.target.value})} style={inputStyle}>
                 <option value="CATEGORIA_A">Cat. A (Base)</option>
                 <option value="CATEGORIA_B">Cat. B (Full)</option>
-                <option value="CATEGORIA_C">Cat. C (Camioneta)</option>
+                <option value="CATEGORIA_C">Cat. C (Alta Gama/4x4)</option>
               </select>
           </div>
 
@@ -209,7 +225,7 @@ function Vehiculos() {
                 <table style={{ width: '100%', minWidth: '950px' }}>
                 <thead>
                     <tr style={{ color: '#64748b', borderBottom: '2px solid #eee' }}>
-                        <th style={{ textAlign: 'left', padding: '10px', width: '60px' }}>ID</th> {/* <--- AQUÍ VOLVIÓ EL ID */}
+                        <th style={{ textAlign: 'left', padding: '10px', width: '60px' }}>ID</th>
                         <th style={{ textAlign: 'left', padding: '10px' }}>Dueño</th>
                         <th style={{ textAlign: 'left', padding: '10px' }}>Vehículo</th>
                         <th style={{ textAlign: 'left', padding: '10px' }}>Control de KM</th>
@@ -220,9 +236,7 @@ function Vehiculos() {
                 <tbody>
                     {vehiculosFiltrados.map(v => (
                     <tr key={v.id} style={{ borderBottom: '1px solid #eee', color: '#333' }}>
-                        {/* <--- AQUÍ SE MUESTRA EL ID EN AZUL ---> */}
                         <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb', fontSize: '1.1em' }}>{v.id}</td>
-                        
                         <td style={{ padding: '10px' }}>
                             {v.cliente ? <strong>👤 {v.cliente.nombre} {v.cliente.apellido}</strong> : <span style={{ color:'#999' }}>Sin asignar</span>}
                             {v.cliente && v.cliente.telefono && <div style={{fontSize:'0.8em', color:'#64748b'}}>📞 {v.cliente.telefono}</div>}
@@ -252,6 +266,61 @@ function Vehiculos() {
             </div>
         )}
       </div>
+
+      {/* MODAL REFERENCIA ATAIA */}
+      {mostrarAyudaCat && (
+        <div style={modalStyle} onClick={() => setMostrarAyudaCat(false)}>
+            <div 
+                style={{ background: 'white', padding: '30px', borderRadius: '12px', width: '650px', maxWidth: '95%', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', color: '#333' }} 
+                onClick={e => e.stopPropagation()} 
+            >
+                <button onClick={() => setMostrarAyudaCat(false)} style={{ position:'absolute', top:'15px', right:'15px', background:'none', border:'none', fontSize:'20px', cursor:'pointer', color: '#64748b' }}>✖</button>
+                
+                <h2 style={{ marginTop: 0, color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
+                    📘 Referencia de Categorías (ATAIA)
+                </h2>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+                    
+                    <div style={{ padding: '15px', background: '#ecfdf5', borderLeft: '5px solid #10b981', borderRadius: '6px' }}>
+                        <h4 style={{ margin: '0 0 8px 0', color: '#065f46', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA A</h4>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#064e3b' }}>
+                            <strong>Tipo de Auto:</strong> Vehículos pequeños a medianos sin equipamiento (Base) con motor nafta o Diesel 8 válvulas.
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.9em', color: '#064e3b' }}>
+                            <strong>Servicios que abarca:</strong> Reparación y mantenimiento de tren delantero y trasero, amortiguadores, sistema de embragues, sistemas de frenos.
+                        </p>
+                    </div>
+
+                    <div style={{ padding: '15px', background: '#fffbeb', borderLeft: '5px solid #f59e0b', borderRadius: '6px' }}>
+                        <h4 style={{ margin: '0 0 8px 0', color: '#b45309', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA B</h4>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#78350f' }}>
+                            <strong>Tipo de Auto:</strong> Vehículos medianos equipamiento full con motor nafta o Diesel 16v.
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.9em', color: '#78350f' }}>
+                            <strong>Servicios que abarca:</strong> Reparación y mantenimiento de motores con sus accesorios periféricos, sistema de refrigeración y lubricación, sistemas de transmisión.
+                        </p>
+                    </div>
+
+                    <div style={{ padding: '15px', background: '#f5f3ff', borderLeft: '5px solid #8b5cf6', borderRadius: '6px' }}>
+                        <h4 style={{ margin: '0 0 8px 0', color: '#5b21b6', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA C</h4>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#4c1d95' }}>
+                            <strong>Tipo de Auto:</strong> Vehículos de alta gama y pick up 4x4.
+                        </p>
+                        <p style={{ margin: 0, fontSize: '0.9em', color: '#4c1d95' }}>
+                            <strong>Servicios que abarca:</strong> Diagnóstico, reparación y mantenimiento de sistemas gestión electrónica, sistemas de alimentación de combustible, sistemas de seguridad activa y pasiva, sistemas de confort.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div style={{ textAlign: 'center', marginTop: '25px' }}>
+                    <button className="btn btn-primary" onClick={() => setMostrarAyudaCat(false)} style={{ padding: '10px 30px' }}>¡Entendido!</button>
+                </div>
+            </div>
+        </div>
+      )}
+
     </div>
   )
 }
