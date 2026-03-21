@@ -1,5 +1,17 @@
 import { useEffect, useState } from 'react'
-import { toast } from 'sonner' // <--- 1. IMPORTAMOS TOAST
+import { toast } from 'sonner'
+// ---> NUEVO: Importamos iconografía profesional <---
+import { 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Info, 
+  HelpCircle, 
+  CheckCircle,
+  FileText,
+  AlertTriangle
+} from 'lucide-react'
 
 function Vehiculos() {
   const [vehiculos, setVehiculos] = useState([])
@@ -31,7 +43,10 @@ function Vehiculos() {
     fetch('http://localhost:8080/api/vehiculos')
       .then(res => res.json())
       .then(data => setVehiculos(data))
-      .catch(err => console.error(err))
+      .catch(err => {
+        // <--- TOAST MINIMALISTA DE ERROR DE RED --->
+        toast.error("Error al conectar con el servidor. Revisa si el Back está prendido.");
+      })
   }
 
   const cargarClientes = () => {
@@ -43,7 +58,7 @@ function Vehiculos() {
 
   const manejarGuardado = () => {
     if(!nuevoAuto.patente || !nuevoAuto.modelo) {
-        // <--- REEMPLAZO DE ALERT POR TOAST DE ADVERTENCIA --->
+        // <--- TOAST MINIMALISTA DE ADVERTENCIA --->
         toast.warning("Por favor completa Patente y Modelo");
         return;
     }
@@ -58,8 +73,8 @@ function Vehiculos() {
     const url = modoEdicion ? `http://localhost:8080/api/vehiculos/${idEditar}` : 'http://localhost:8080/api/vehiculos';
     const metodo = modoEdicion ? 'PUT' : 'POST';
 
-    // Lanzamos un toast de "Cargando" mientras espera a Java
-    const toastId = toast.loading(modoEdicion ? "Actualizando vehículo..." : "Guardando vehículo...");
+    // <--- TOAST DE CARGANDO PROVISIONAL --->
+    const toastId = toast.loading(modoEdicion ? "Actualizando vehículo..." : "Registrando vehículo...");
 
     fetch(url, {
         method: metodo,
@@ -68,12 +83,8 @@ function Vehiculos() {
     })
     .then(async (res) => {
         if (!res.ok) throw new Error("Error del servidor");
-        
         // <--- ACTUALIZAMOS EL TOAST A ÉXITO --->
-        toast.success(modoEdicion ? "¡Vehículo actualizado correctamente!" : "¡Vehículo registrado con éxito!", {
-            id: toastId, // Le pasamos el ID para que reemplace al de "Cargando..."
-        });
-        
+        toast.success(modoEdicion ? "Vehículo actualizado correctamente." : "Vehículo registrado con éxito.", { id: toastId });
         terminarEdicion();
         cargarVehiculos();
     })
@@ -101,15 +112,18 @@ function Vehiculos() {
   }
 
   const eliminarVehiculo = (id) => {
+    // Para borrar, mantenemos el confirm nativo por seguridad
     if(!confirm("¿Estás seguro de que deseas borrar este vehículo?")) return;
     
     fetch(`http://localhost:8080/api/vehiculos/${id}`, { method: 'DELETE' })
     .then((res) => {
         if (!res.ok) throw new Error("Error al borrar");
+        // <--- TOAST DE ÉXITO --->
         toast.success("Vehículo eliminado del sistema.");
         cargarVehiculos();
     })
     .catch(err => {
+        // <--- TOAST DE ERROR --->
         toast.error("No se puede borrar. Revisa que no tenga historial asociado.");
     })
   }
@@ -132,9 +146,12 @@ function Vehiculos() {
   const calcularEstadoService = (kmActual, kmProximo) => {
       if (!kmActual || !kmProximo) return null;
       const diferencia = kmProximo - kmActual;
-      if (diferencia <= 0) return <span style={{ background: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em' }}>🚨 ¡VENCIDO!</span>;
-      if (diferencia <= 1000) return <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em' }}>⚠️ Falta ({diferencia} km)</span>;
-      return <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em' }}>✅ Al día</span>;
+      if (diferencia <= 0) return <span style={{ background: '#fee2e2', color: '#991b1b', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <AlertTriangle size={14}/> ¡VENCIDO!</span>;
+      if (diferencia <= 1000) return <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em' }}>
+          ⚠️ Faltan {diferencia} km</span>;
+      return <span style={{ background: '#dcfce7', color: '#166534', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.85em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <CheckCircle size={14}/> Al día</span>;
   }
 
   const vehiculosFiltrados = vehiculos.filter(v => {
@@ -146,11 +163,7 @@ function Vehiculos() {
   });
 
   const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#333', width: '100%', boxSizing: 'border-box' }
-
-  const modalStyle = {
-    position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-  }
+  const modalStyle = { position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }
 
   return (
     <div style={{ color: '#333' }}>
@@ -158,11 +171,14 @@ function Vehiculos() {
       
       {/* FORMULARIO */}
       <div className="card" style={{ background: modoEdicion ? '#fff7ed' : '#eef2ff', border: modoEdicion ? '2px solid #fdba74' : '1px solid #c7d2fe', padding: '20px' }}>
-        <h3 style={{ marginTop: 0, color: modoEdicion ? '#c2410c' : '#1e40af' }}>{modoEdicion ? '✏️ Editar' : '➕ Nuevo Auto'}</h3>
+        <h3 style={{ marginTop: 0, color: modoEdicion ? '#c2410c' : '#1e40af', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {modoEdicion ? <Edit size={20}/> : <Plus size={20}/>}
+          {modoEdicion ? 'Actualizar Vehículo' : 'Registrar Nuevo Auto'}
+        </h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
           <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{display:'block', marginBottom:'5px', fontWeight:'bold', fontSize:'0.9em'}}>👤 Dueño del Auto:</label>
+              <label style={{display:'block', marginBottom:'5px', fontWeight:'bold', fontSize:'0.9em', color: '#475569'}}>👤 Dueño del Auto:</label>
               <select style={inputStyle} value={nuevoAuto.cliente ? nuevoAuto.cliente.id : ""} onChange={handleClienteChange}>
                   <option value="">-- Seleccionar Cliente --</option>
                   {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre} {c.apellido}</option>)}
@@ -180,7 +196,8 @@ function Vehiculos() {
                     style={{ background:'#3b82f6', color:'white', border:'none', borderRadius:'50%', width:'18px', height:'18px', fontSize:'11px', cursor:'pointer', display:'flex', justifyContent:'center', alignItems:'center', fontWeight:'bold' }} 
                     title="Ver referencias de ATAIA"
                   >
-                    ?
+                    {/* ---> REEMPLAZO: Icono en ATAIA <--- */}
+                    <HelpCircle size={12} color="white"/>
                   </button>
               </label>
               <select value={nuevoAuto.categoria} onChange={e => setNuevoAuto({...nuevoAuto, categoria: e.target.value})} style={inputStyle}>
@@ -190,8 +207,10 @@ function Vehiculos() {
               </select>
           </div>
 
-          <div style={{ borderTop: '1px dashed #cbd5e1', gridColumn: '1 / -1', margin: '10px 0', paddingTop: '10px' }}>
-              <strong style={{color: '#475569'}}>📝 Tarjeta Verde y Control de Service</strong>
+          {/* ---> REEMPLAZO: Icono en sección de Tarjeta Verde <--- */}
+          <div style={{ borderTop: '1px dashed #cbd5e1', gridColumn: '1 / -1', margin: '10px 0', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={18} color="#475569" />
+              <strong style={{color: '#475569'}}>Tarjeta Verde y Control de Service</strong>
           </div>
 
           <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>N° Motor</label><input placeholder="Ej: FMB123..." value={nuevoAuto.numeroMotor} onChange={e => setNuevoAuto({...nuevoAuto, numeroMotor: e.target.value})} style={inputStyle} /></div>
@@ -200,24 +219,33 @@ function Vehiculos() {
           <div><label style={{fontSize:'0.85em', fontWeight:'bold', color: '#1d4ed8'}}>Próximo Service (KM)</label><input type="number" placeholder="Ej: 160000" value={nuevoAuto.proximoServiceKm} onChange={e => setNuevoAuto({...nuevoAuto, proximoServiceKm: e.target.value})} style={{...inputStyle, border: '2px solid #93c5fd', backgroundColor: '#eff6ff'}} /></div>
 
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <button className="btn" onClick={manejarGuardado} style={{ backgroundColor: modoEdicion ? '#f97316' : '#2563eb', color: 'white', flex: 1 }}>{modoEdicion ? 'Actualizar Vehículo' : 'Guardar Vehículo'}</button>
+              <button className="btn" onClick={manejarGuardado} style={{ backgroundColor: modoEdicion ? '#f97316' : '#2563eb', color: 'white', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                {/* ---> REEMPLAZO: Icono en botón guardar <--- */}
+                <CheckCircle size={18} color="white"/>
+                {modoEdicion ? 'Actualizar Vehículo' : 'Guardar Vehículo'}
+              </button>
               {modoEdicion && <button className="btn" onClick={terminarEdicion} style={{ backgroundColor: '#94a3b8', color: 'white', flex: 1 }}>Cancelar</button>}
           </div>
         </div>
       </div>
 
-      {/* TABLA CON BUSCADOR */}
+      {/* TABLA CON BUSCADOR PROFESIONAL */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ margin: 0 }}>🚗 Flota Actual</h3>
+            <h3 style={{ margin: 0, color: '#1e40af' }}>🚗 Flota Registrada</h3>
             
-            <input 
-                type="text" 
-                placeholder="🔍 Buscar por ID, patente o dueño..." 
-                value={busqueda}
-                onChange={e => setBusqueda(e.target.value)}
-                style={{ ...inputStyle, width: '300px', border: '2px solid #3b82f6' }}
-            />
+            {/* Buscador minimalista con ícono */}
+            <div style={{ position: 'relative', width: '300px' }}>
+                {/* ---> REEMPLAZO: Icono de lupa en buscador <--- */}
+                <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input 
+                    type="text" 
+                    placeholder="Buscar patente, ID o dueño..." 
+                    value={busqueda}
+                    onChange={e => setBusqueda(e.target.value)}
+                    style={{ ...inputStyle, paddingLeft: '35px', border: '2px solid #3b82f6' }}
+                />
+            </div>
         </div>
 
         {vehiculosFiltrados.length === 0 ? <p style={{textAlign:'center', color:'#888'}}>No se encontraron vehículos.</p> : (
@@ -238,12 +266,12 @@ function Vehiculos() {
                     <tr key={v.id} style={{ borderBottom: '1px solid #eee', color: '#333' }}>
                         <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb', fontSize: '1.1em' }}>{v.id}</td>
                         <td style={{ padding: '10px' }}>
-                            {v.cliente ? <strong>👤 {v.cliente.nombre} {v.cliente.apellido}</strong> : <span style={{ color:'#999' }}>Sin asignar</span>}
+                            {v.cliente ? <strong>{v.cliente.nombre} {v.cliente.apellido}</strong> : <span style={{ color:'#999' }}>Sin asignar</span>}
                             {v.cliente && v.cliente.telefono && <div style={{fontSize:'0.8em', color:'#64748b'}}>📞 {v.cliente.telefono}</div>}
                         </td>
                         <td style={{ padding: '10px' }}>
                             <div style={{ background: '#1e293b', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', fontSize:'0.85em', display: 'inline-block', marginBottom: '4px' }}>{v.patente}</div>
-                            <div style={{ fontSize: '0.9em' }}>{v.marca} {v.modelo}</div>
+                            <div style={{ fontSize: '0.9em' }}>{v.marca} {v.modelo} <span style={{color:'#888'}}>({v.categoria.replace('CATEGORIA_','')})</span></div>
                         </td>
                         <td style={{ padding: '10px' }}>
                             <div style={{ marginBottom: '5px' }}>
@@ -256,8 +284,13 @@ function Vehiculos() {
                             <div><strong>Chasis:</strong> {v.numeroChasis || '-'}</div>
                         </td>
                         <td style={{ padding: '10px', textAlign: 'right' }}>
-                            <button className="btn" style={{ background: '#f59e0b', color: 'white', marginRight: '5px', padding: '5px 10px' }} onClick={() => iniciarEdicion(v)}>✏️</button>
-                            <button className="btn" style={{ background: '#ef4444', color: 'white', padding: '5px 10px' }} onClick={() => eliminarVehiculo(v.id)}>🗑️</button>
+                            {/* ---> REEMPLAZO: Iconos profesionales de acción <--- */}
+                            <button className="btn" style={{ background: '#f59e0b', color: 'white', marginRight: '5px', padding: '6px' }} onClick={() => iniciarEdicion(v)} title="Editar">
+                                <Edit size={16} color="white"/>
+                            </button>
+                            <button className="btn" style={{ background: '#ef4444', color: 'white', padding: '6px' }} onClick={() => eliminarVehiculo(v.id)} title="Borrar">
+                                <Trash2 size={16} color="white"/>
+                            </button>
                         </td>
                     </tr>
                     ))}
@@ -276,8 +309,9 @@ function Vehiculos() {
             >
                 <button onClick={() => setMostrarAyudaCat(false)} style={{ position:'absolute', top:'15px', right:'15px', background:'none', border:'none', fontSize:'20px', cursor:'pointer', color: '#64748b' }}>✖</button>
                 
-                <h2 style={{ marginTop: 0, color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
-                    📘 Referencia de Categorías (ATAIA)
+                {/* ---> REEMPLAZO: Icono en título modal <--- */}
+                <h2 style={{ marginTop: 0, color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Info size={24} color="#1e40af"/> Referencia de Categorías (ATAIA)
                 </h2>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
@@ -287,9 +321,6 @@ function Vehiculos() {
                         <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#064e3b' }}>
                             <strong>Tipo de Auto:</strong> Vehículos pequeños a medianos sin equipamiento (Base) con motor nafta o Diesel 8 válvulas.
                         </p>
-                        <p style={{ margin: 0, fontSize: '0.9em', color: '#064e3b' }}>
-                            <strong>Servicios que abarca:</strong> Reparación y mantenimiento de tren delantero y trasero, amortiguadores, sistema de embragues, sistemas de frenos.
-                        </p>
                     </div>
 
                     <div style={{ padding: '15px', background: '#fffbeb', borderLeft: '5px solid #f59e0b', borderRadius: '6px' }}>
@@ -297,18 +328,12 @@ function Vehiculos() {
                         <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#78350f' }}>
                             <strong>Tipo de Auto:</strong> Vehículos medianos equipamiento full con motor nafta o Diesel 16v.
                         </p>
-                        <p style={{ margin: 0, fontSize: '0.9em', color: '#78350f' }}>
-                            <strong>Servicios que abarca:</strong> Reparación y mantenimiento de motores con sus accesorios periféricos, sistema de refrigeración y lubricación, sistemas de transmisión.
-                        </p>
                     </div>
 
                     <div style={{ padding: '15px', background: '#f5f3ff', borderLeft: '5px solid #8b5cf6', borderRadius: '6px' }}>
                         <h4 style={{ margin: '0 0 8px 0', color: '#5b21b6', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA C</h4>
                         <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#4c1d95' }}>
                             <strong>Tipo de Auto:</strong> Vehículos de alta gama y pick up 4x4.
-                        </p>
-                        <p style={{ margin: 0, fontSize: '0.9em', color: '#4c1d95' }}>
-                            <strong>Servicios que abarca:</strong> Diagnóstico, reparación y mantenimiento de sistemas gestión electrónica, sistemas de alimentación de combustible, sistemas de seguridad activa y pasiva, sistemas de confort.
                         </p>
                     </div>
 

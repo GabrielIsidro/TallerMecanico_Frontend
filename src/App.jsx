@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Toaster } from 'sonner'
 import './App.css'
 
-// ---> NUEVO: Importamos los íconos de Lucide React
+// ---> NUEVO: Importamos los íconos profesionales para el menú <---
 import { 
   LayoutDashboard, 
   FileText, 
@@ -26,13 +26,14 @@ function App() {
   return (
     <div className="dashboard-layout">
       
+      {/* Contenedor global de notificaciones minimalistas (Toasts) */}
       <Toaster richColors position="bottom-right" />
 
       {/* --- BARRA LATERAL (SIDEBAR) --- */}
       <aside className="sidebar">
         <div className="logo">
-          {/* Le podemos poner el ícono de llave inglesa al logo también */}
-          <Wrench size={28} color="#fbbf24" /> 
+          {/* ---> NUEVO: Ícono al lado del logo del taller <--- */}
+          <Wrench size={24} color="#fbbf24" style={{marginRight: '10px'}} />
           Taller El Pato
         </div>
         <nav>
@@ -41,8 +42,7 @@ function App() {
             className={`menu-item ${seccionActiva === 'dashboard' ? 'active' : ''}`}
             onClick={() => setSeccionActiva('dashboard')}
           >
-            {/* Reemplazamos el emoji por el componente del ícono. 
-                size={20} es un tamaño ideal para menús. */}
+            {/* ---> REEMPLAZO: Ícono profesional en lugar de emoji <--- */}
             <LayoutDashboard size={20} />
             Inicio
           </div>
@@ -92,10 +92,10 @@ function App() {
       {/* --- ÁREA DE CONTENIDO PRINCIPAL --- */}
       <main className="main-content">
         
-        {/* Cabecera / Usuario Logueado */}
+        {/* Cabecera / Usuario Logueado (RESEÑADO) */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'white', padding: '8px 15px', borderRadius: '20px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', fontWeight: 'bold', color: '#334155'}}>
-              <UserCircle size={20} color="#3b82f6" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '10px 18px', borderRadius: '30px', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', fontWeight: 'bold', color: '#334155'}}>
+              <UserCircle size={22} color="#3b82f6" />
               Nestor
             </div>
         </div>
@@ -104,7 +104,8 @@ function App() {
         {seccionActiva === 'cotizador' && <Cotizador />}
         {seccionActiva === 'vehiculos' && <Vehiculos />}
         {seccionActiva === 'historial' && <Historial />}
-        {seccionActiva === 'clientes' && <Clientes />}
+        {/* ---> ACÁ ESTÁ EL CAMBIO <--- */}
+        {seccionActiva === 'clientes' && <Clientes setSeccionActiva={setSeccionActiva} />}
         {seccionActiva === 'servicios' && <Servicios />}
         
       </main>

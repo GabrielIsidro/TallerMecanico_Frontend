@@ -1,248 +1,396 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Fragment } from 'react'
+import { toast } from 'sonner'
+import { 
+  History, 
+  Search, 
+  ChevronDown,
+  ChevronUp,
+  Car, 
+  User, 
+  Receipt,
+  Wrench,
+  Printer,
+  CreditCard // <-- NUEVO: Icono de tarjeta para los pagos
+} from 'lucide-react'
 
 function Historial() {
-  /* --- 1. ESTADOS --- */
-  const [ordenes, setOrdenes] = useState([]) // Guarda la lista de todas las facturas/órdenes
-  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null) // Guarda los datos de la orden que queremos ver/imprimir en el modal
+  const [ordenes, setOrdenes] = useState([])
+  const [busqueda, setBusqueda] = useState('')
+  const [cargando, setCargando] = useState(true)
+  const [filaExpandida, setFilaExpandida] = useState(null)
 
-  /* --- 2. CARGA INICIAL --- */
   useEffect(() => {
     cargarOrdenes()
   }, [])
 
   const cargarOrdenes = () => {
+    setCargando(true)
     fetch('http://localhost:8080/api/ordenes')
       .then(res => res.json())
       .then(data => {
-        // Lógica de ordenamiento: 
-        // b.id - a.id asegura que las órdenes más nuevas (IDs más altos) aparezcan arriba en la tabla
-        const ordenadas = data.sort((a, b) => b.id - a.id);
-        setOrdenes(ordenadas)
+        setOrdenes(data.sort((a, b) => b.id - a.id))
+        setCargando(false)
       })
-      .catch(err => console.error(err))
+      .catch(err => {
+        setCargando(false)
+        toast.error("Error al cargar el historial desde el servidor.");
+      })
   }
 
-  /* --- 3. ACTUALIZACIÓN DE ESTADOS (PATCH) --- 
-   * Usamos PATCH en lugar de PUT porque solo queremos modificar un campito 
-   * específico (el estado) y no toda la orden de trabajo.
-   */
-  const cambiarEstado = (id, nuevoEstado) => {
-    fetch(`http://localhost:8080/api/ordenes/${id}/estado?estado=${nuevoEstado}`, {
-        method: 'PATCH' // Método HTTP ideal para actualizaciones parciales
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Error al cambiar estado");
-        cargarOrdenes(); // Refrescamos la tabla general
-        
-        // Sincronización de UI: Si justo tenemos esa orden abierta en el modal, 
-        // le actualizamos el estado en vivo para que no muestre datos viejos.
-        if (ordenSeleccionada && ordenSeleccionada.id === id) {
-            setOrdenSeleccionada({...ordenSeleccionada, estado: nuevoEstado});
-        }
-    })
-    .catch(err => alert("Error. Verifica que el Enum en Java coincida con las opciones."))
+  const calcularPrecioItem = (servicio, categoria) => {
+      if (!servicio) return 0;
+      if (categoria === 'CATEGORIA_B') return servicio.precioB || 0;
+      if (categoria === 'CATEGORIA_C') return servicio.precioC || 0;
+      return servicio.precioA || 0; 
   }
 
-  /* --- 4. DICCIONARIO DE ESTILOS VISUALES --- 
-   * Un "Switch" muy limpio que recibe el estado de la base de datos y 
-   * devuelve un objeto con los colores y el texto formateado con un emoji.
-   */
-  const getEstilosEstado = (estado) => {
-    switch(estado) {
-        case 'ENTREGADO': return { bg: '#dcfce7', color: '#166534', border: '#bbf7d0', texto: '🚗 Entregado' }; 
-        case 'FINALIZADO': return { bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe', texto: '🏁 Finalizado' }; 
-        case 'EN_REPARACION': return { bg: '#ffedd5', color: '#c2410c', border: '#fed7aa', texto: '🔧 En Reparación' }; 
-        case 'APROBADO': return { bg: '#f3e8ff', color: '#6b21a8', border: '#e9d5ff', texto: '👍 Aprobado' }; 
-        case 'PRESUPUESTADO': return { bg: '#e0f2fe', color: '#0369a1', border: '#bae6fd', texto: '📝 Presupuestado' }; 
-        // El 'default' actúa como paracaídas si llega un estado nulo o desconocido
-        default: return { bg: '#fef9c3', color: '#854d0e', border: '#fde047', texto: '⏳ Pendiente' }; 
+  const cambiarEstado = (orden, nuevoEstado) => {
+    const toastId = toast.loading("Actualizando estado...");
+    
+    fetch(`http://localhost:8080/api/ordenes/${orden.id}/estado?estado=${nuevoEstado}`, {
+        method: 'PATCH'
+    })
+    .then(async (res) => {
+        if (!res.ok) throw new Error("El servidor rechazó la actualización");
+        toast.success(`Estado cambiado a: ${nuevoEstado.replace('_', ' ')}`, { id: toastId });
+        cargarOrdenes(); 
+    })
+    .catch((err) => {
+        toast.error("Fallo al cambiar estado. Revisá si el backend está corriendo.", { id: toastId });
+    });
+  }
+
+  // ---> NUEVA FUNCIÓN: Conecta con el PatchMapping de pago que hiciste en Java <---
+  const cambiarPago = (orden, nuevaFormaPago) => {
+    const toastId = toast.loading("Actualizando forma de pago...");
+    
+    fetch(`http://localhost:8080/api/ordenes/${orden.id}/pago?formaPago=${nuevaFormaPago}`, {
+        method: 'PATCH'
+    })
+    .then(async (res) => {
+        if (!res.ok) throw new Error("El servidor rechazó la actualización");
+        toast.success(`Pago registrado como: ${nuevaFormaPago.replace('_', ' ')}`, { id: toastId });
+        cargarOrdenes(); 
+    })
+    .catch((err) => {
+        toast.error("Fallo al registrar pago.", { id: toastId });
+    });
+  }
+
+  const imprimirTicket = (orden) => {
+    const ventanita = window.open('', 'PRINT', 'height=800,width=800');
+    
+    const categoria = orden.vehiculo?.categoria;
+    let htmlItems = '';
+    let totalReal = 0;
+
+    if (orden.items && orden.items.length > 0) {
+        orden.items.forEach(item => {
+            const precio = calcularPrecioItem(item.tipoServicio, categoria);
+            totalReal += precio;
+            htmlItems += `
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; color: #334155;">${item.tipoServicio?.descripcion || 'Servicio'}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 500; color: #0f172a;">$${precio.toLocaleString()}</td>
+                </tr>
+            `;
+        });
+    } else {
+        totalReal = orden.costoTotal || 0;
+        htmlItems = `<tr><td colspan="2" style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${orden.descripcion}</td></tr>`;
+    }
+
+    // Le damos formato legible al método de pago para el PDF
+    const pagoFormateado = orden.formaPago ? orden.formaPago.replace('_', ' ') : 'A COORDINAR';
+
+    ventanita.document.write(`
+        <html>
+            <head>
+                <title>Factura #${orden.id} - Taller El Pato</title>
+                <style>
+                    body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6; background: #fff; margin: 0; padding: 40px; }
+                    .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+                    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+                    .header h1 { margin: 0; color: #1e40af; font-size: 28px; }
+                    .header p { margin: 5px 0 0 0; color: #64748b; font-size: 14px; }
+                    .invoice-details { text-align: right; }
+                    .invoice-details h2 { margin: 0; color: #0f172a; font-size: 20px; }
+                    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+                    .info-col h3 { margin-top: 0; color: #475569; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                    th { text-align: left; background: #f1f5f9; padding: 12px; font-size: 14px; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+                    .total-box { display: flex; justify-content: flex-end; }
+                    .total-content { background: #eff6ff; padding: 20px 30px; border-radius: 8px; border: 1px solid #bfdbfe; text-align: right; }
+                    .total-content span { display: block; color: #1e40af; font-size: 14px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+                    .total-content strong { font-size: 28px; color: #1d4ed8; }
+                    .footer { text-align: center; margin-top: 40px; color: #94a3b8; font-size: 13px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class="invoice-box">
+                    <div class="header">
+                        <div>
+                            <h1>TALLER EL PATO</h1>
+                            <p>Servicio Automotor Integral</p>
+                            <p>Capitán Sarmiento, Buenos Aires</p>
+                        </div>
+                        <div class="invoice-details">
+                            <h2>FACTURA ORIGINAL</h2>
+                            <p><strong>Orden N°:</strong> #${orden.id}</p>
+                            <p><strong>Fecha:</strong> ${new Date(orden.fechaIngreso).toLocaleDateString('es-AR')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-col">
+                            <h3>Datos del Cliente</h3>
+                            <strong>${orden.vehiculo?.cliente ? `${orden.vehiculo.cliente.nombre} ${orden.vehiculo.cliente.apellido}` : 'Consumidor Final'}</strong><br>
+                            Teléfono: ${orden.vehiculo?.cliente?.telefono || 'No registrado'}<br>
+                            Email: ${orden.vehiculo?.cliente?.email || 'No registrado'}
+                        </div>
+                        <div class="info-col">
+                            <h3>Datos del Vehículo</h3>
+                            <strong>${orden.vehiculo?.marca} ${orden.vehiculo?.modelo}</strong><br>
+                            Patente: <span style="background: #1e293b; color: white; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${orden.vehiculo?.patente}</span><br>
+                            Kilometraje: ${orden.vehiculo?.kilometraje ? orden.vehiculo.kilometraje.toLocaleString() + ' km' : 'No registrado'}<br>
+                            Motor: ${orden.vehiculo?.numeroMotor || 'S/D'}
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Descripción del Trabajo / Repuesto</th>
+                                <th style="text-align: right;">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${htmlItems}
+                        </tbody>
+                    </table>
+
+                    <div class="total-box">
+                        <div class="total-content">
+                            <span>Total a Pagar</span>
+                            <strong>$${totalReal.toLocaleString()}</strong>
+                            <p style="margin: 10px 0 0 0; color: #475569; font-size: 14px;">Forma de Pago: <strong>${pagoFormateado}</strong></p>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Los trabajos tienen una garantía de 30 días o 1000km, lo que ocurra primero.</p>
+                        <p>¡Gracias por confiar en Taller El Pato!</p>
+                    </div>
+                </div>
+            </body>
+        </html>
+    `);
+
+    ventanita.document.close();
+    ventanita.focus();
+    setTimeout(() => { ventanita.print(); }, 500);
+  }
+
+  const toggleFila = (id) => {
+    if (filaExpandida === id) {
+        setFilaExpandida(null);
+    } else {
+        setFilaExpandida(id);
     }
   }
 
-  // Estilo base para el fondo oscuro del modal emergente
-  const modalStyle = {
-    position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+  const ordenesFiltradas = ordenes.filter(o => {
+    if (!o || !o.vehiculo) return false;
+    const termino = busqueda.toLowerCase()
+    const idString = o.id.toString()
+    const patente = (o.vehiculo.patente || '').toLowerCase()
+    const nombreCliente = o.vehiculo.cliente ? `${o.vehiculo.cliente.nombre} ${o.vehiculo.cliente.apellido}`.toLowerCase() : ''
+    
+    return idString.includes(termino) || patente.includes(termino) || nombreCliente.includes(termino)
+  })
+
+  const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#333', width: '300px', boxSizing: 'border-box' }
+
+  const getColorEstado = (estado) => {
+      switch(estado) {
+          case 'PENDIENTE': return '#f59e0b'; 
+          case 'EN_REPARACION': return '#3b82f6'; 
+          case 'FINALIZADO': return '#8b5cf6'; 
+          case 'ENTREGADO': return '#10b981'; 
+          default: return '#64748b'; 
+      }
   }
 
   return (
     <div style={{ color: '#333' }}>
       
-      {/* --- MAGIA DE IMPRESIÓN (CSS Inject) --- 
-       * @media print le avisa al navegador: "Cuando el usuario apriete Ctrl+P, aplicá estas reglas".
-       * 1. Oculta todo el body.
-       * 2. Vuelve visible solo el div con id "zona-factura".
-       * 3. Le quita márgenes y sombras a la factura para que no gaste tinta ni se imprima corrida.
-       * 4. Oculta los botones (clase "no-imprimir") para que no salgan en el papel.
-       */}
-      <style>
-        {`
-          @media print {
-            body * { visibility: hidden; }
-            #zona-factura, #zona-factura * { visibility: visible; }
-            #zona-factura { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 20px; box-shadow: none; border: none; }
-            .no-imprimir { display: none !important; }
-          }
-        `}
-      </style>
-
-      <h1 style={{ color: '#1e293b', marginTop: 0 }}>Historial de Trabajos</h1>
-      
-      {/* --- TABLA PRINCIPAL --- */}
-      <div className="card">
-        {ordenes.length === 0 ? (
-           <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>📂 No hay órdenes creadas todavía.</div>
-        ) : (
-          <table style={{ width: '100%' }}>
-            <thead>
-              <tr style={{ color: '#64748b', borderBottom: '2px solid #eee' }}>
-                <th style={{ textAlign: 'left', padding: '12px' }}>#</th>
-                <th style={{ textAlign: 'left', padding: '12px' }}>Fecha</th>
-                <th style={{ textAlign: 'left', padding: '12px' }}>Vehículo / Cliente</th>
-                <th style={{ textAlign: 'left', padding: '12px' }}>Total</th>
-                <th style={{ textAlign: 'center', padding: '12px' }}>Estado</th>
-                <th style={{ textAlign: 'right', padding: '12px' }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordenes.map(orden => {
-                // Obtenemos los colores para la fila actual
-                const estilos = getEstilosEstado(orden.estado);
-                
-                return (
-                  <tr key={orden.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px', fontWeight: 'bold', color: '#2563eb' }}>#{orden.id}</td>
-                    
-                    {/* Formateamos la fecha que viene de la BD a formato local (Ej: dd/mm/aaaa) */}
-                    <td style={{ padding: '12px', fontSize: '0.9em' }}>{new Date(orden.fechaIngreso).toLocaleDateString()}</td>
-                    
-                    <td style={{ padding: '12px' }}>
-                      <div style={{ fontWeight: 'bold' }}>{orden.vehiculo.modelo} ({orden.vehiculo.patente})</div>
-                      <div style={{ fontSize: '0.85em', color: '#64748b' }}>{orden.vehiculo.cliente ? `👤 ${orden.vehiculo.cliente.nombre}` : 'Sin dueño'}</div>
-                    </td>
-                    
-                    <td style={{ padding: '12px', fontWeight: 'bold', color: '#166534' }}>${orden.costoTotal ? orden.costoTotal.toLocaleString() : '0'}</td>
-                    
-                    {/* SELECTOR DE ESTADOS */}
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <select 
-                        value={orden.estado || 'PENDIENTE'}
-                        onChange={(e) => cambiarEstado(orden.id, e.target.value)}
-                        // Aplicamos los colores dinámicos calculados arriba
-                        style={{ backgroundColor: estilos.bg, color: estilos.color, border: `1px solid ${estilos.border}`, padding: '6px 10px', borderRadius: '8px', fontWeight: 'bold', fontSize: '0.85em', cursor: 'pointer', outline: 'none' }}
-                      >
-                        <option value="PENDIENTE">⏳ Pendiente</option>
-                        <option value="PRESUPUESTADO">📝 Presupuestado</option>
-                        <option value="APROBADO">👍 Aprobado</option>
-                        <option value="EN_REPARACION">🔧 En Reparación</option>
-                        <option value="FINALIZADO">🏁 Finalizado</option>
-                        <option value="ENTREGADO">🚗 Entregado</option>
-                      </select>
-                    </td>
-
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
-                      {/* Al hacer click, guardamos toda la orden en el estado, lo que "activa" el modal inferior */}
-                      <button className="btn" title="Ver Detalle" onClick={() => setOrdenSeleccionada(orden)} style={{ background: '#3b82f6', color: 'white', padding: '6px 12px' }}>📄 Factura / Orden</button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div>
+              <h1 style={{ margin: 0, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <History size={32} color="#3b82f6" /> Historial Operativo
+              </h1>
+              <p style={{ color: '#64748b', margin: '5px 0 0 0', fontSize: '1em' }}>Revisá todos los trabajos, cambiá estados e imprimí facturas.</p>
+          </div>
+          
+          <div style={{ position: 'relative' }}>
+              <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+              <input 
+                type="text" 
+                placeholder="Buscar ID, patente o dueño..." 
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                style={{ ...inputStyle, paddingLeft: '35px', border: '2px solid #3b82f6' }}
+              />
+          </div>
       </div>
 
-      {/* --- MODAL / FACTURA IMPRIMIBLE --- 
-       * Solo se renderiza si 'ordenSeleccionada' no es nulo.
-       */}
-      {ordenSeleccionada && (
-        // Al hacer click en el fondo oscuro, cerramos el modal
-        <div style={modalStyle} onClick={() => setOrdenSeleccionada(null)}>
-            
-            <div 
-                id="zona-factura" 
-                style={{ background: 'white', padding: '40px', borderRadius: '8px', width: '600px', maxWidth: '95%', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', color: '#333' }} 
-                // e.stopPropagation() es CRUCIAL acá: Evita que al hacer click *dentro* de la factura blanca, 
-                // el click traspase al fondo oscuro y se cierre el modal accidentalmente.
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Botón de cerrar (Clase no-imprimir para que no ensucie el papel) */}
-                <button className="no-imprimir" onClick={() => setOrdenSeleccionada(null)} style={{ position:'absolute', top:'15px', right:'15px', background:'none', border:'none', fontSize:'24px', cursor:'pointer' }}>✖</button>
-
-                {/* --- DISEÑO DE LA FACTURA --- */}
-                
-                {/* Cabecera corporativa */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #1e293b', paddingBottom: '20px', marginBottom: '20px' }}>
-                    <div>
-                        <h2 style={{ margin: 0, color: '#1e293b', fontSize: '28px' }}>TALLER EL PATO</h2>
-                        <p style={{ margin: '5px 0 0 0', color: '#64748b' }}>Especialistas en Inyección y Mecánica</p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                        <h3 style={{ margin: 0, color: '#3b82f6' }}>ORDEN DE TRABAJO</h3>
-                        <p style={{ margin: '5px 0 0 0', fontWeight: 'bold' }}>N° #{ordenSeleccionada.id}</p>
-                        <p style={{ margin: '5px 0 0 0', color: '#64748b' }}>Fecha: {new Date(ordenSeleccionada.fechaIngreso).toLocaleDateString()}</p>
-                    </div>
-                </div>
-                
-                {/* Cajas de datos del Cliente y Vehículo */}
-                <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-                    <div style={{ flex: 1, background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                        <h4 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Datos del Cliente</h4>
-                        <p style={{ margin: '5px 0' }}><strong>Nombre:</strong> {ordenSeleccionada.vehiculo.cliente ? `${ordenSeleccionada.vehiculo.cliente.nombre} ${ordenSeleccionada.vehiculo.cliente.apellido}` : 'Consumidor Final'}</p>
-                        <p style={{ margin: '5px 0' }}><strong>Teléfono:</strong> {ordenSeleccionada.vehiculo.cliente ? ordenSeleccionada.vehiculo.cliente.telefono : '-'}</p>
-                    </div>
-                    <div style={{ flex: 1, background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                        <h4 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Datos del Vehículo</h4>
-                        <p style={{ margin: '5px 0' }}><strong>Vehículo:</strong> {ordenSeleccionada.vehiculo.marca} {ordenSeleccionada.vehiculo.modelo}</p>
-                        <p style={{ margin: '5px 0' }}><strong>Patente:</strong> {ordenSeleccionada.vehiculo.patente.toUpperCase()}</p>
-                        <p style={{ margin: '5px 0' }}><strong>KM:</strong> {ordenSeleccionada.vehiculo.kilometraje ? `${ordenSeleccionada.vehiculo.kilometraje.toLocaleString()} km` : '-'}</p>
-                    </div>
-                </div>
-
-                {/* Detalle iterativo de servicios realizados */}
-                <h4 style={{ borderBottom: '1px solid #cbd5e1', paddingBottom: '10px', color: '#1e293b' }}>Detalle de Reparaciones</h4>
-                <table style={{ width: '100%', marginBottom: '30px', borderCollapse: 'collapse' }}>
+      <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
+        {cargando ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Cargando registros...</div>
+        ) : ordenesFiltradas.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>No se encontraron órdenes.</div>
+        ) : (
+            <div style={{overflowX: 'auto'}}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1050px' }}>
                     <thead>
-                        <tr style={{ background: '#f1f5f9' }}>
-                            <th style={{ padding: '10px', textAlign: 'left', borderBottom: '1px solid #cbd5e1' }}>Descripción del Servicio</th>
-                            <th style={{ padding: '10px', textAlign: 'right', borderBottom: '1px solid #cbd5e1' }}>Importe</th>
+                        <tr style={{ background: '#f8fafc', color: '#475569', borderBottom: '2px solid #e2e8f0' }}>
+                            <th style={{ textAlign: 'left', padding: '15px' }}>ID</th>
+                            <th style={{ textAlign: 'left', padding: '15px' }}>Fecha</th>
+                            <th style={{ textAlign: 'left', padding: '15px' }}>Vehículo / Dueño</th>
+                            <th style={{ textAlign: 'left', padding: '15px' }}>ESTADO</th>
+                            {/* ---> NUEVA COLUMNA DE PAGO <--- */}
+                            <th style={{ textAlign: 'left', padding: '15px' }}>PAGO</th>
+                            <th style={{ textAlign: 'right', padding: '15px' }}>Total Exacto</th>
+                            <th style={{ textAlign: 'center', padding: '15px', width: '120px' }}>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {/* Verificamos que existan ítems antes de mapearlos para evitar errores de renderizado */}
-                        {ordenSeleccionada.items && ordenSeleccionada.items.map((item, idx) => (
-                            <tr key={idx}>
-                                <td style={{ padding: '10px', borderBottom: '1px solid #f1f5f9' }}>{item.tipoServicio ? item.tipoServicio.descripcion : 'Servicio'}</td>
-                                <td style={{ padding: '10px', textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>${item.subtotal ? item.subtotal.toLocaleString() : '0'}</td>
-                            </tr>
-                        ))}
+                        {ordenesFiltradas.map(o => {
+                            const categoria = o.vehiculo?.categoria;
+                            const totalReal = o.items && o.items.length > 0 
+                                ? o.items.reduce((sum, item) => sum + calcularPrecioItem(item.tipoServicio, categoria), 0) 
+                                : (o.costoTotal || 0);
+
+                            return (
+                            <Fragment key={o.id}>
+                                <tr style={{ borderBottom: '1px solid #e2e8f0', background: filaExpandida === o.id ? '#f0fdf4' : 'white', transition: '0.2s background' }}>
+                                    <td style={{ padding: '15px', fontWeight: 'bold', color: '#2563eb' }}>#{o.id}</td>
+                                    <td style={{ padding: '15px', color: '#475569' }}>{new Date(o.fechaIngreso).toLocaleDateString('es-AR')}</td>
+                                    <td style={{ padding: '15px' }}>
+                                        <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{o.vehiculo?.patente || 'S/P'} - {o.vehiculo?.marca}</div>
+                                        <div style={{ fontSize: '0.85em', color: '#64748b' }}>👤 {o.vehiculo?.cliente ? `${o.vehiculo.cliente.nombre} ${o.vehiculo.cliente.apellido}` : 'Sin dueño'}</div>
+                                    </td>
+                                    
+                                    <td style={{ padding: '15px' }}>
+                                        <select 
+                                            value={o.estado || 'PENDIENTE'} 
+                                            onChange={(e) => cambiarEstado(o, e.target.value)}
+                                            style={{ 
+                                                padding: '6px 10px', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.85em', cursor: 'pointer', outline: 'none',
+                                                backgroundColor: 'white', color: getColorEstado(o.estado), border: `2px solid ${getColorEstado(o.estado)}`
+                                            }}
+                                        >
+                                            <option value="PENDIENTE">PENDIENTE</option>
+                                            <option value="EN_REPARACION">EN REPARACIÓN</option>
+                                            <option value="FINALIZADO">FINALIZADO</option>
+                                            <option value="ENTREGADO">ENTREGADO</option>
+                                        </select>
+                                    </td>
+
+                                    {/* ---> NUEVO: Selector de Forma de Pago <--- */}
+                                    <td style={{ padding: '15px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <CreditCard size={16} color="#475569" />
+                                            <select 
+                                                value={o.formaPago || 'PENDIENTE'} 
+                                                onChange={(e) => cambiarPago(o, e.target.value)}
+                                                style={{ 
+                                                    padding: '6px', borderRadius: '8px', fontSize: '0.85em', cursor: 'pointer', outline: 'none',
+                                                    backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1'
+                                                }}
+                                            >
+                                                <option value="PENDIENTE">Pendiente</option>
+                                                <option value="EFECTIVO">Efectivo 💵</option>
+                                                <option value="TRANSFERENCIA">Transferencia 🏦</option>
+                                                <option value="MERCADO_PAGO">Mercado Pago 📱</option>
+                                                <option value="TARJETA_DEBITO">Débito 💳</option>
+                                                <option value="TARJETA_CREDITO">Crédito 💳</option>
+                                            </select>
+                                        </div>
+                                    </td>
+
+                                    <td style={{ padding: '15px', textAlign: 'right', fontWeight: 'bold', color: '#166534', fontSize: '1.1em' }}>
+                                        ${totalReal.toLocaleString()}
+                                    </td>
+
+                                    <td style={{ padding: '15px', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                                        <button 
+                                            onClick={() => imprimirTicket(o)}
+                                            title="Imprimir Factura A4"
+                                            style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', transition: '0.2s' }}
+                                        >
+                                            <Printer size={18} />
+                                        </button>
+                                        
+                                        <button 
+                                            onClick={() => toggleFila(o.id)}
+                                            title="Ver Detalle de Ítems"
+                                            style={{ background: filaExpandida === o.id ? '#166534' : '#e2e8f0', color: filaExpandida === o.id ? 'white' : '#475569', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', transition: '0.2s' }}
+                                        >
+                                            {filaExpandida === o.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                {filaExpandida === o.id && (
+                                    <tr style={{ background: '#f8fafc', borderBottom: '2px solid #cbd5e1' }}>
+                                        <td colSpan="7" style={{ padding: '0' }}>
+                                            <div style={{ padding: '20px 30px', display: 'flex', gap: '40px' }}>
+                                                
+                                                <div style={{ flex: '1', borderRight: '1px solid #cbd5e1', paddingRight: '20px' }}>
+                                                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 0, color: '#1e40af' }}>
+                                                        <Receipt size={18} /> Info Técnica
+                                                    </h4>
+                                                    <div style={{ display: 'grid', gap: '10px', fontSize: '0.9em', color: '#475569', marginTop: '15px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Car size={16}/> <strong>Motor:</strong> {o.vehiculo?.numeroMotor || 'N/A'}</div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Car size={16}/> <strong>Chasis:</strong> {o.vehiculo?.numeroChasis || 'N/A'}</div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><User size={16}/> <strong>Teléfono:</strong> {o.vehiculo?.cliente?.telefono || 'N/A'}</div>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ flex: '2' }}>
+                                                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: 0, color: '#334155' }}>
+                                                        <Wrench size={18} /> Trabajos Facturados (Ítems)
+                                                    </h4>
+                                                    
+                                                    {(!o.items || o.items.length === 0) ? (
+                                                        <p style={{ color: '#94a3b8', fontSize: '0.9em' }}>No hay detalle de ítems cargados.</p>
+                                                    ) : (
+                                                        <div style={{ background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '10px' }}>
+                                                            {o.items.map((item, idx) => {
+                                                                const precioCalculado = calcularPrecioItem(item.tipoServicio, categoria);
+                                                                return (
+                                                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: idx !== o.items.length -1 ? '1px dashed #cbd5e1' : 'none' }}>
+                                                                        <span style={{ color: '#334155', fontSize: '0.95em' }}>{item.tipoServicio?.descripcion || 'Servicio'}</span>
+                                                                        <span style={{ fontWeight: 'bold', color: '#166534' }}>${precioCalculado.toLocaleString()}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )}
+                            </Fragment>
+                        )})}
                     </tbody>
                 </table>
-
-                {/* Gran Total */}
-                <div style={{ textAlign: 'right', fontSize: '1.5em', color: '#166534', borderTop: '2px solid #1e293b', paddingTop: '15px' }}>
-                    <strong>TOTAL: ${ordenSeleccionada.costoTotal ? ordenSeleccionada.costoTotal.toLocaleString() : '0'}</strong>
-                </div>
-
-                {/* Pie de página con legales/avisos */}
-                <div style={{ marginTop: '40px', textAlign: 'center', fontSize: '0.8em', color: '#94a3b8' }}>
-                    <p>Los presupuestos tienen una validez de 7 días. El kilometraje para próximo service es orientativo.</p>
-                    <p>¡Gracias por confiar en nosotros!</p>
-                </div>
-
-                {/* Botón que dispara el evento nativo de impresión del navegador */}
-                <div className="no-imprimir" style={{ marginTop: '30px', textAlign: 'center' }}>
-                    <button 
-                        onClick={() => window.print()} 
-                        style={{ background: '#2563eb', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '10px' }}
-                    >
-                        🖨️ Generar PDF / Imprimir
-                    </button>
-                </div>
-
             </div>
-        </div>
-      )}
+        )}
+      </div>
 
     </div>
   )
