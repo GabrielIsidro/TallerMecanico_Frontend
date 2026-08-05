@@ -8,8 +8,10 @@ import {
   Trash2, 
   ArrowRight,
   CheckCircle,
-  Plus // Acá está el ícono que faltaba
+  Plus
 } from 'lucide-react'
+import api from '../api/axiosConfig'
+import '../styles/Tablas.css'
 
 function Cotizador() {
   const [servicios, setServicios] = useState([]) 
@@ -21,14 +23,12 @@ function Cotizador() {
 
   useEffect(() => {
     Promise.all([
-      fetch('http://localhost:8080/api/servicios'),
-      fetch('http://localhost:8080/api/vehiculos')
+      api.get('/servicios'),
+      api.get('/vehiculos')
     ])
-    .then(async ([resServicios, resVehiculos]) => {
-      const dataServicios = await resServicios.json();
-      const dataVehiculos = await resVehiculos.json();
-      setServicios(dataServicios);
-      setVehiculos(dataVehiculos); 
+    .then(([resServicios, resVehiculos]) => {
+      setServicios(resServicios.data);
+      setVehiculos(resVehiculos.data); 
     })
     .catch(err => console.error("Error cargando datos:", err));
   }, [])
@@ -87,17 +87,9 @@ function Cotizador() {
 
     const toastId = toast.loading("Generando cotización...");
 
-    fetch('http://localhost:8080/api/ordenes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orden)
-    })
+    api.post('/ordenes', orden)
     .then(res => {
-        if (!res.ok) throw new Error("Error en la petición");
-        return res.json();
-    })
-    .then(data => {
-        setPresupuesto(data);
+        setPresupuesto(res.data);
         setCarrito([]); 
         toast.success("¡Cotización generada exitosamente!", { id: toastId });
     }) 
@@ -116,23 +108,27 @@ function Cotizador() {
     setGruposExpandidos(prev => ({ ...prev, [nombreGrupo]: !prev[nombreGrupo] }));
   }
 
-  const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#333333', width: '100%', fontSize: '16px' }
   const totalEstimadoCarrito = carrito.reduce((sum, item) => sum + item.precioEstimado, 0);
 
   return (
-    <div style={{ color: '#333333' }}>
-        <header style={{ marginBottom: '30px' }}>
-          <h1 style={{ margin: 0, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Calculator size={32} color="#3b82f6" /> Nuevo Presupuesto
-          </h1>
-          <p style={{ color: '#64748b', margin: '5px 0 0 0' }}>Selecciona los servicios para armar la cotización oficial.</p>
+    <div className="tb-container">
+        <header className="tb-header">
+          <div>
+            <h1 className="tb-title" style={{ fontSize: '1.8em' }}>
+              <div style={{ background: '#eff6ff', padding: '10px', borderRadius: '10px', display: 'flex' }}>
+                <Calculator size={26} color="#3b82f6" />
+              </div>
+              Nuevo Presupuesto
+            </h1>
+            <p className="tb-subtitle">Selecciona los servicios para armar la cotización oficial.</p>
+          </div>
         </header>
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
           
           <div>
-            <div className="card">
-              <h3 style={{marginTop:0, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <div className="tb-card">
+              <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
                 <Car size={20}/> Selección de Vehículo
               </h3>
               <select 
@@ -142,19 +138,20 @@ function Cotizador() {
                     setCarrito([]); 
                     setPresupuesto(null);
                 }}
-                style={{...inputStyle, cursor: 'pointer', border: '2px solid #3b82f6'}} 
+                className="tb-select"
+                style={{ cursor: 'pointer', border: '2px solid #3b82f6' }} 
               >
                 <option value="">-- Buscar y seleccionar vehículo --</option>
                 {vehiculos.map(v => (
                   <option key={v.id} value={v.id}>
-                    [{v.patente}] - {v.marca} {v.modelo} {v.cliente ? `(${v.cliente.nombre})` : ''} - {v.categoria}
+                    [{v.patente}] - {v.marca} {v.modelo} {v.cliente ? `(${v.cliente.nombreCliente})` : ''} - {v.categoria}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="card">
-              <h3 style={{marginTop:0, color: '#1e40af', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <div className="tb-card" style={{ marginTop: '20px' }}>
+              <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
                 <Wrench size={20}/> Catálogo de Servicios
               </h3>
               
@@ -163,14 +160,14 @@ function Cotizador() {
                     <div key={nombreGrupo} style={{ marginBottom: '10px' }}>
                         <div 
                             onClick={() => toggleGrupo(nombreGrupo)}
-                            style={{ backgroundColor: '#f1f5f9', padding: '12px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', color: '#1e40af', border: '1px solid #e2e8f0', transition: '0.2s' }}
+                            style={{ backgroundColor: '#f8fafc', padding: '12px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', color: '#1e40af', border: '1px solid #e2e8f0', transition: '0.2s' }}
                         >
                             <span>{nombreGrupo} ({serviciosAgrupados[nombreGrupo].length})</span>
                             <span>{gruposExpandidos[nombreGrupo] ? '🔽' : '▶️'}</span>
                         </div>
 
                         {gruposExpandidos[nombreGrupo] && (
-                            <div style={{ padding: '10px', backgroundColor: '#fafafa', border: '1px solid #e2e8f0', borderTop: 'none', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                            <div style={{ padding: '10px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderTop: 'none', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
                                 <table style={{width: '100%'}}>
                                   <tbody>
                                     {serviciosAgrupados[nombreGrupo].map((s) => (
@@ -182,7 +179,7 @@ function Cotizador() {
                                             </div>
                                         </td>
                                         <td style={{width: '100px', textAlign: 'right', padding: '10px 5px'}}>
-                                          <button className="btn btn-add" onClick={() => agregarAlCarrito(s)} style={{padding: '6px 12px', fontSize: '0.9em', display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto'}}>
+                                          <button className="tb-btn-save" onClick={() => agregarAlCarrito(s)} style={{padding: '6px 12px', fontSize: '0.9em', display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', background: '#3b82f6'}}>
                                               <Plus size={14}/> Agregar
                                           </button>
                                         </td>
@@ -199,8 +196,8 @@ function Cotizador() {
           </div>
 
           <div>
-            <div className="card" style={{ borderTop: '5px solid #3b82f6' }}>
-              <h3 style={{marginTop:0, color: '#1e40af', display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <div className="tb-card" style={{ borderTop: '5px solid #3b82f6' }}>
+              <h3 className="tb-title" style={{ color: '#1e40af', fontSize: '1.2em' }}>
                 <ShoppingCart size={20}/> Resumen
               </h3>
               
@@ -215,7 +212,7 @@ function Cotizador() {
                                 <div style={{ fontSize: '0.95em', color:'#334155' }}>{item.nombre}</div>
                                 <div style={{ fontSize: '0.85em', color:'#64748b', fontWeight: 'bold' }}>${item.precioEstimado.toLocaleString()}</div>
                             </div>
-                            <button className="btn btn-danger" style={{padding: '6px', display: 'flex'}} onClick={() => quitarDelCarrito(index)}>
+                            <button className="tb-btn-icon tb-btn-delete" onClick={() => quitarDelCarrito(index)}>
                                 <Trash2 size={16}/>
                             </button>
                         </li>
@@ -229,14 +226,14 @@ function Cotizador() {
               )}
 
               <div style={{marginTop: '20px'}}>
-                  <button className="btn btn-primary" onClick={generarPresupuesto} style={{width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px'}}>
+                  <button className="tb-btn-save" onClick={generarPresupuesto} style={{width: '100%', background: '#3b82f6'}}>
                     COTIZAR AHORA <ArrowRight size={18}/>
                   </button>
               </div>
             </div>
             
             {presupuesto && (
-              <div className="card" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', textAlign:'center' }}>
+              <div className="tb-card" style={{ backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', textAlign:'center', marginTop: '20px' }}>
                 <CheckCircle size={40} color="#166534" style={{ margin: '0 auto 10px auto' }} />
                 <h2 style={{ color: '#166534', margin: '10px 0' }}>¡Orden Guardada!</h2>
                 <h3 style={{ color: '#166534', margin: '10px 0' }}>Total Oficial: ${presupuesto.costoTotal.toLocaleString()}</h3>

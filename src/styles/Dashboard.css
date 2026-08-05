@@ -1,0 +1,207 @@
+/* src/styles/Dashboard.css */
+
+/* Top header styles */
+.dl-header-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.dl-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+.dl-profile-btn.open, .dl-profile-btn:hover {
+    background: #f1f5f9;
+}
+
+.dl-profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.dl-profile-name {
+    font-weight: bold;
+    color: #1e293b;
+    font-size: 0.95em;
+}
+
+.dl-profile-email {
+    color: #64748b;
+    font-size: 0.8em;
+}
+
+.dl-profile-icon {
+    transition: transform 0.3s;
+}
+
+.dl-profile-icon.open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown Menu */
+.dl-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: white;
+    border-radius: 12px;
+    width: 220px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border: 1px solid #e2e8f0;
+    z-index: 100;
+    overflow: hidden;
+    padding: 8px;
+}
+
+.dl-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    color: #334155;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background 0.2s;
+}
+.dl-dropdown-item:hover {
+    background: #f1f5f9;
+}
+
+.dl-dropdown-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 8px 0;
+}
+
+.dl-dropdown-item-danger {
+    color: #ef4444;
+}
+.dl-dropdown-item-danger:hover {
+    background: #fef2f2;
+}
+
+.dl-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 90;
+}
+
+/* Menu items for Sidebar inside layout */
+.dl-menu-admin {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 20px;
+    color: #cbd5e1;
+}
+
+/* Dashboard.jsx stats cards */
+.db-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.db-stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.db-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+.db-icon-container {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.db-stat-info {
+    display: flex;
+    flex-direction: column;
+}
+.db-stat-title {
+    color: #64748b;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+.db-stat-value {
+    color: #1e293b;
+    font-size: 1.8em;
+    font-weight: 800;
+    margin-top: 5px;
+}
+.db-content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+@media (max-width: 1024px) {
+    .db-content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.db-card-header {
+    margin-top: 0;
+    color: #1e293b;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.db-empty-state {
+    text-align: center;
+    color: #94a3b8;
+    padding: 20px 0;
+}
+.db-order-item {
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    transition: border-color 0.2s;
+}
+.db-order-item:hover {
+    border-color: #cbd5e1;
+}
+.db-order-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.db-order-vehicle {
+    font-weight: bold;
+    color: #1e293b;
+}
+.db-order-date {
+    color: #64748b;
+    font-size: 0.85em;
+}
+.db-order-desc {
+    color: #475569;
+    font-size: 0.95em;
+    margin: 0 0 10px 0;
+}

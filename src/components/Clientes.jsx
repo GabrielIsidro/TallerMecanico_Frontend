@@ -1,197 +1,347 @@
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
-import { 
-  Users, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  CheckCircle,
-  Clock3
-} from 'lucide-react'
+﻿import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { User, Building2, Phone, Mail, MapPin, IdCard, Trash2, Edit, PlusCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import api from '../api/axiosConfig';
+import '../styles/Tablas.css';
 
-function Clientes({ setSeccionActiva }) {
-  const [clientes, setClientes] = useState([])
-  const [modoEdicion, setModoEdicion] = useState(false)
-  const [idEditar, setIdEditar] = useState(null)
-  const [busqueda, setBusqueda] = useState('')
+function Clientes() {
+  const [clientes, setClientes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  
+  // Estados de paginación
+  const [paginaActual, setPaginaActual] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  const [totalElementos, setTotalElementos] = useState(0);
+  const size = 10;
+  
+  // Estados del formulario
+  const [idEditando, setIdEditando] = useState(null);
+  const [nombreCliente, setNombreCliente] = useState('');
+  const [esEmpresa, setEsEmpresa] = useState(false);
+  const [documentoCuit, setDocumentoCuit] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [email, setEmail] = useState('');
+  const [direccion, setDireccion] = useState('');
 
-  const [nuevoCliente, setNuevoCliente] = useState({
-    nombre: '',
-    apellido: '',
-    telefono: '',
-    direccion: '',
-    email: ''
-  })
+  const [terminoBusqueda, setTerminoBusqueda] = useState('');
+  const [busquedaAplicada, setBusquedaAplicada] = useState('');
 
   useEffect(() => {
-    cargarClientes()
-  }, [])
+    cargarClientes(paginaActual, size, busquedaAplicada);
+  }, [paginaActual, busquedaAplicada]);
 
-  const cargarClientes = () => {
-    fetch('http://localhost:8080/api/clientes')
-      .then(res => res.json())
-      .then(data => setClientes(data))
-      .catch(err => {
-        toast.error("Error al conectar con el servidor.");
-      })
-  }
+  // Si cambia la búsqueda aplicada, reiniciamos a la página 0
+  const aplicarBusqueda = () => {
+    setPaginaActual(0);
+    setBusquedaAplicada(terminoBusqueda);
+  };
 
-  const manejarGuardado = () => {
-    if(!nuevoCliente.nombre || !nuevoCliente.apellido) {
-        toast.warning("Por favor completa Nombre y Apellido");
-        return;
+  const handleKeyDownBusqueda = (e) => {
+    if (e.key === 'Enter') {
+      aplicarBusqueda();
+    }
+  };
+
+  const cargarClientes = async (page = 0, size = 10, search = '') => {
+    try {
+      setCargando(true);
+      const response = await api.get(`/clientes?page=${page}&size=${size}&search=${search}`);
+      setClientes(response.data.content || []);
+      setTotalPaginas(response.data.totalPages || 0);
+      setTotalElementos(response.data.totalElements || 0);
+    } catch (error) {
+      toast.error("Error al cargar los clientes");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!nombreCliente.trim()) {
+      toast.warning("El Nombre o Razón Social es obligatorio.");
+      return;
     }
 
-    const url = modoEdicion ? `http://localhost:8080/api/clientes/${idEditar}` : 'http://localhost:8080/api/clientes';
-    const metodo = modoEdicion ? 'PUT' : 'POST';
-    const toastId = toast.loading(modoEdicion ? "Actualizando cliente..." : "Registrando cliente...");
+    const clienteData = { nombreCliente, esEmpresa, documentoCuit, telefono, email, direccion };
+    try {
+      if (idEditando) {
+        await api.put(`/clientes/${idEditando}`, clienteData);
+      } else {
+        await api.post('/clientes', clienteData);
+      }
+      
+      toast.success(`Cliente ${idEditando ? 'actualizado' : 'guardado'} con éxito`);
+      cargarClientes(paginaActual, size, busquedaAplicada);
+      limpiarFormulario();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error de conexión");
+    }
+  };
 
-    fetch(url, {
-        method: metodo,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nuevoCliente)
-    })
-    .then(async (res) => {
-        if (!res.ok) throw new Error("Error del servidor");
-        toast.success(modoEdicion ? "Cliente actualizado correctamente." : "Cliente registrado con éxito.", { id: toastId });
-        terminarEdicion();
-        cargarClientes();
-    })
-    .catch(err => {
-        toast.error("Hubo un error al guardar el cliente.", { id: toastId });
-    });
-  }
-
-  const iniciarEdicion = (cliente) => {
-    setModoEdicion(true);
-    setIdEditar(cliente.id);
-    setNuevoCliente(cliente)
-  }
-
-  const eliminarCliente = (id) => {
-    if(!confirm("¿Estás seguro de que deseas borrar este cliente? Se perderán sus datos operativos.")) return;
+  const eliminarCliente = async (id) => {
+    if (!window.confirm("¿Estás seguro de eliminar este cliente?")) return;
     
-    fetch(`http://localhost:8080/api/clientes/${id}`, { method: 'DELETE' })
-    .then((res) => {
-        if (!res.ok) throw new Error("Error al borrar");
-        toast.success("Cliente eliminado del sistema.");
-        cargarClientes();
-    })
-    .catch(err => {
-        toast.error("No se puede borrar. Revisa que no tenga autos o facturas asociadas.");
-    })
-  }
+    try {
+      await api.delete(`/clientes/${id}`);
+      toast.success("Cliente eliminado");
+      cargarClientes(paginaActual, size, busquedaAplicada);
+    } catch (error) {
+      toast.error("No se pudo eliminar el cliente (Puede tener órdenes asociadas)");
+    }
+  };
 
-  const terminarEdicion = () => {
-    setModoEdicion(false);
-    setIdEditar(null);
-    setNuevoCliente({ nombre: '', apellido: '', telefono: '', direccion: '', email: '' });
-  }
+  const editarCliente = (cliente) => {
+    setIdEditando(cliente.id);
+    setNombreCliente(cliente.nombreCliente || '');
+    setEsEmpresa(cliente.esEmpresa || false);
+    setDocumentoCuit(cliente.documentoCuit || '');
+    setTelefono(cliente.telefono || '');
+    setEmail(cliente.email || '');
+    setDireccion(cliente.direccion || '');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  const clientesFiltrados = clientes.filter(c => {
-      const termino = busqueda.toLowerCase();
-      const idString = c.id.toString();
-      const nombreCompleto = `${c.nombre} ${c.apellido}`.toLowerCase();
-      const telefono = (c.telefono || '').toLowerCase();
-      return idString.includes(termino) || nombreCompleto.includes(termino) || telefono.includes(termino);
-  });
-
-  const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: 'white', color: '#333', width: '100%', boxSizing: 'border-box' }
+  const limpiarFormulario = () => {
+    setIdEditando(null);
+    setNombreCliente('');
+    setEsEmpresa(false);
+    setDocumentoCuit('');
+    setTelefono('');
+    setEmail('');
+    setDireccion('');
+  };
 
   return (
-    <div style={{ color: '#333' }}>
-      <h1 style={{ color: '#1e293b', marginTop: 0 }}>Gestión de Clientes</h1>
+    <div className="tb-container" style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
       
-      <div className="card" style={{ background: modoEdicion ? '#fff7ed' : '#eef2ff', border: modoEdicion ? '2px solid #fdba74' : '1px solid #c7d2fe', padding: '20px' }}>
-        <h3 style={{ marginTop: 0, color: modoEdicion ? '#c2410c' : '#1e40af', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {modoEdicion ? <Edit size={20}/> : <Plus size={20}/>}
-          {modoEdicion ? 'Actualizar Cliente' : 'Registrar Nuevo Cliente'}
-        </h3>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-          <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Nombre</label><input value={nuevoCliente.nombre} onChange={e => setNuevoCliente({...nuevoCliente, nombre: e.target.value})} style={inputStyle} /></div>
-          {/* AQUÍ ESTABA EL ERROR (nuevoAuto -> nuevoCliente) */}
-          <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Apellido</label><input value={nuevoCliente.apellido} onChange={e => setNuevoCliente({...nuevoCliente, apellido: e.target.value})} style={inputStyle} /></div>
-          <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Teléfono</label><input placeholder="Ej: 11 1234 5678" value={nuevoCliente.telefono} onChange={e => setNuevoCliente({...nuevoCliente, telefono: e.target.value})} style={inputStyle} /></div>
-          <div><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Email</label><input placeholder="Ej: nestor@taller.com" value={nuevoCliente.email} onChange={e => setNuevoCliente({...nuevoCliente, email: e.target.value})} style={inputStyle} /></div>
-          <div style={{gridColumn: '1 / -1'}}><label style={{fontSize:'0.85em', fontWeight:'bold'}}>Dirección (Opcional)</label><input value={nuevoCliente.direccion} onChange={e => setNuevoCliente({...nuevoCliente, direccion: e.target.value})} style={inputStyle} /></div>
-
-          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <button className="btn" onClick={manejarGuardado} style={{ backgroundColor: modoEdicion ? '#f97316' : '#2563eb', color: 'white', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                <CheckCircle size={18} color="white"/>
-                {modoEdicion ? 'Actualizar Cliente' : 'Guardar Cliente'}
-              </button>
-              {modoEdicion && <button className="btn" onClick={terminarEdicion} style={{ backgroundColor: '#94a3b8', color: 'white', flex: 1 }}>Cancelar</button>}
+      <div className="tb-header">
+        <h1 className="tb-title" style={{ fontSize: '1.8em' }}>
+          <div style={{ background: '#dbeafe', padding: '10px', borderRadius: '10px', display: 'flex' }}>
+            <User size={26} color="#3b82f6" />
           </div>
-        </div>
+          Gestión de Clientes
+        </h1>
       </div>
 
-      <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ margin: 0, color: '#1e40af' }}>👥 Cartera de Clientes</h3>
+      {/* FORMULARIO */}
+      <div className="tb-card" style={{ padding: '25px', marginBottom: '30px' }}>
+        <h3 className="tb-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', fontSize: '1.2em' }}>
+          {idEditando ? <Edit size={18} /> : <PlusCircle size={18} />}
+          {idEditando ? 'Editar Cliente' : 'Nuevo Cliente'}
+        </h3>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '15px', alignItems: 'center' }}>
             
-            <div style={{ position: 'relative', width: '300px' }}>
-                <Search size={18} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
+            <div 
+              onClick={() => setEsEmpresa(!esEmpresa)}
+              style={{ 
+                background: esEmpresa ? '#eff6ff' : '#f8fafc', 
+                padding: '15px', borderRadius: '8px', 
+                border: `1px solid ${esEmpresa ? '#bfdbfe' : '#e2e8f0'}`, 
+                display: 'flex', alignItems: 'center', gap: '10px', 
+                cursor: 'pointer', transition: 'all 0.2s' 
+              }}
+            >
+              <input type="checkbox" checked={esEmpresa} readOnly style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '0.95em' }}>Es una Empresa</span>
+                <span style={{ fontSize: '0.8em', color: '#64748b' }}>Habilitar CUIT y Razón Social</span>
+              </div>
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <label className="tb-label">
+                {esEmpresa ? 'Razón Social' : 'Nombre y Apellido'}
+              </label>
+              {esEmpresa ? <Building2 size={16} className="tb-filter-icon" /> : <User size={16} className="tb-filter-icon" />}
+              <input 
+                type="text" 
+                value={nombreCliente} 
+                onChange={(e) => setNombreCliente(e.target.value)} 
+                className="tb-input" 
+                style={{ paddingLeft: '35px' }}
+                required 
+                placeholder={esEmpresa ? "Ej: Logística Los Hermanos S.R.L." : "Ej: Juan Pérez"} 
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+            <div style={{ position: 'relative' }}>
+              <label className="tb-label">{esEmpresa ? 'CUIT' : 'DNI'}</label>
+              <IdCard size={16} className="tb-filter-icon" />
+              <input 
+                type="text" 
+                value={documentoCuit} 
+                onChange={(e) => setDocumentoCuit(e.target.value)} 
+                className="tb-input" 
+                style={{ paddingLeft: '35px' }}
+                placeholder={esEmpresa ? "30-12345678-9" : "12.345.678"} 
+              />
+            </div>
+            
+            <div style={{ position: 'relative' }}>
+              <label className="tb-label">Teléfono</label>
+              <Phone size={16} className="tb-filter-icon" />
+              <input 
+                type="text" 
+                value={telefono} 
+                onChange={(e) => setTelefono(e.target.value)} 
+                className="tb-input" 
+                style={{ paddingLeft: '35px' }}
+                placeholder="11 1234-5678" 
+              />
+            </div>
+
+            <div style={{ position: 'relative' }}>
+              <label className="tb-label">Email</label>
+              <Mail size={16} className="tb-filter-icon" />
+              <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className="tb-input"
+                style={{ paddingLeft: '35px' }} 
+                placeholder="correo@ejemplo.com" 
+              />
+            </div>
+          </div>
+
+          <div style={{ position: 'relative' }}>
+            <label className="tb-label">Dirección</label>
+            <MapPin size={16} className="tb-filter-icon" />
+            <input 
+              type="text" 
+              value={direccion} 
+              onChange={(e) => setDireccion(e.target.value)} 
+              className="tb-input" 
+              style={{ paddingLeft: '35px' }}
+              placeholder="Calle Falsa 123" 
+            />
+          </div>
+
+          <div className="tb-modal-actions">
+            {idEditando && (
+              <button type="button" onClick={limpiarFormulario} className="tb-btn-cancel">
+                Cancelar
+              </button>
+            )}
+            <button type="submit" className="tb-btn-save" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#3b82f6' }}>
+              {idEditando ? <Edit size={18} /> : <PlusCircle size={18} />}
+              {idEditando ? 'Guardar Cambios' : 'Agregar Cliente'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* LISTA DE CLIENTES */}
+      <div className="tb-card" style={{ padding: '25px' }}>
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 className="tb-title" style={{ fontSize: '1.2em' }}>
+            Directorio de Clientes
+            <span style={{ fontSize: '0.8em', color: '#64748b', marginLeft: '10px', fontWeight: 'normal' }}>
+              ({totalElementos} total)
+            </span>
+          </h3>
+          
+          <div style={{ position: 'relative', width: '300px', display: 'flex', gap: '10px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+                <Search size={18} className="tb-filter-icon" />
                 <input 
-                    type="text" 
-                    placeholder="Buscar por ID, nombre o teléfono..." 
-                    value={busqueda}
-                    onChange={e => setBusqueda(e.target.value)}
-                    style={{ ...inputStyle, paddingLeft: '35px', border: '2px solid #3b82f6' }}
+                  type="text" 
+                  placeholder="Buscar..." 
+                  value={terminoBusqueda}
+                  onChange={(e) => setTerminoBusqueda(e.target.value)}
+                  onKeyDown={handleKeyDownBusqueda}
+                  className="tb-input"
+                  style={{ paddingLeft: '38px', width: '100%' }}
                 />
             </div>
+            <button className="tb-btn-save" onClick={aplicarBusqueda} style={{ padding: '0 15px', background: '#3b82f6' }}>
+                Buscar
+            </button>
+          </div>
         </div>
 
-        {clientesFiltrados.length === 0 ? <p style={{textAlign:'center', color:'#888'}}>No se encontraron clientes.</p> : (
-            <div style={{overflowX: 'auto'}}>
-                <table style={{ width: '100%', minWidth: '950px' }}>
-                <thead>
-                    <tr style={{ color: '#64748b', borderBottom: '2px solid #eee' }}>
-                        <th style={{ textAlign: 'left', padding: '10px', width: '60px' }}>ID</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Cliente</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Teléfono</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Email</th>
-                        <th style={{ textAlign: 'left', padding: '10px' }}>Dirección</th>
-                        <th style={{ textAlign: 'right', padding: '10px' }}>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {clientesFiltrados.map(c => (
-                    <tr key={c.id} style={{ borderBottom: '1px solid #eee', color: '#333' }}>
-                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb', fontSize: '1.1em' }}>{c.id}</td>
-                        <td style={{ padding: '10px' }}>
-                            <strong>👤 {c.nombre} {c.apellido}</strong>
-                        </td>
-                        <td style={{ padding: '10px' }}>
-                            📞 {c.telefono || <span style={{color:'#999'}}>Sin teléfono</span>}
-                        </td>
-                        <td style={{ padding: '10px' }}>
-                            📧 {c.email || <span style={{color:'#999'}}>Sin email</span>}
-                        </td>
-                        <td style={{ padding: '10px', fontSize: '0.9em', color: '#475569' }}>
-                            📍 {c.direccion || '-'}
-                        </td>
-                        <td style={{ padding: '10px', textAlign: 'right' }}>
-                            <button className="btn" style={{ background: '#f59e0b', color: 'white', marginRight: '5px', padding: '6px' }} onClick={() => iniciarEdicion(c)} title="Editar">
-                                <Edit size={16} color="white"/>
-                            </button>
-                            <button className="btn" style={{ background: '#3b82f6', color: 'white', marginRight: '5px', padding: '6px' }} onClick={() => setSeccionActiva && setSeccionActiva('historial')} title="Ver Historial">
-                                <Clock3 size={16} color="white"/>
-                            </button>
-                            <button className="btn" style={{ background: '#ef4444', color: 'white', padding: '6px' }} onClick={() => eliminarCliente(c.id)} title="Borrar">
-                                <Trash2 size={16} color="white"/>
-                            </button>
-                        </td>
-                    </tr>
-                    ))}
-                </tbody>
-                </table>
-            </div>
+        {cargando ? (
+          <p className="tb-loading">Cargando clientes...</p>
+        ) : clientes.length === 0 ? (
+          <p className="tb-loading" style={{ background: '#f8fafc', borderRadius: '8px' }}>No hay clientes registrados o que coincidan con la búsqueda.</p>
+        ) : (
+          <div className="tb-table-wrapper">
+            <table className="tb-table">
+              <thead className="tb-thead">
+                <tr>
+                  <th className="tb-th" style={{ borderRadius: '8px 0 0 0' }}>Cliente</th>
+                  <th className="tb-th">Documento</th>
+                  <th className="tb-th">Contacto</th>
+                  <th className="tb-th" style={{ textAlign: 'right', borderRadius: '0 8px 0 0' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientes.map(cliente => (
+                  <tr key={cliente.id} className="tb-tr">
+                    <td className="tb-td">
+                      <div className="tb-td-primary">
+                        {cliente.esEmpresa ? <Building2 size={18} color="#8b5cf6" /> : <User size={18} color="#3b82f6" />}
+                        <span>{cliente.nombreCliente}</span>
+                      </div>
+                    </td>
+                    <td className="tb-td tb-td-muted" style={{ fontSize: '0.9em' }}>
+                      {cliente.documentoCuit || '-'}
+                    </td>
+                    <td className="tb-td">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85em', color: '#64748b' }}>
+                        {cliente.telefono && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Phone size={12} /> {cliente.telefono}</span>}
+                        {cliente.email && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={12} /> {cliente.email}</span>}
+                      </div>
+                    </td>
+                    <td className="tb-td" style={{ textAlign: 'right' }}>
+                      <div className="tb-actions" style={{ justifyContent: 'flex-end' }}>
+                        <button onClick={() => editarCliente(cliente)} className="tb-btn-icon" style={{ background: '#fef3c7', color: '#d97706' }} title="Editar">
+                          <Edit size={16} />
+                        </button>
+                        <button onClick={() => eliminarCliente(cliente.id)} className="tb-btn-icon tb-btn-delete" title="Eliminar">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Paginación */}
+            {totalPaginas > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+                <button 
+                  onClick={() => setPaginaActual(prev => Math.max(0, prev - 1))}
+                  disabled={paginaActual === 0}
+                  style={{ padding: '8px 12px', background: paginaActual === 0 ? '#e2e8f0' : '#3b82f6', color: paginaActual === 0 ? '#94a3b8' : 'white', border: 'none', borderRadius: '8px', cursor: paginaActual === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <span style={{ fontWeight: 'bold', color: '#475569' }}>
+                  Página {paginaActual + 1} de {totalPaginas}
+                </span>
+                <button 
+                  onClick={() => setPaginaActual(prev => Math.min(totalPaginas - 1, prev + 1))}
+                  disabled={paginaActual === totalPaginas - 1}
+                  style={{ padding: '8px 12px', background: paginaActual === totalPaginas - 1 ? '#e2e8f0' : '#3b82f6', color: paginaActual === totalPaginas - 1 ? '#94a3b8' : 'white', border: 'none', borderRadius: '8px', cursor: paginaActual === totalPaginas - 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default Clientes
+export default Clientes;

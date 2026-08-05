@@ -41,6 +41,7 @@ a:hover {
 /* --- CUERPO DEL DOCUMENTO (Body) --- */
 body {
   margin: 0;
+  padding: 0;
   /* Centrado absoluto rápido: flex y place-items: center 
    * centran cualquier contenido directo del body tanto vertical como horizontalmente. */
   display: flex;
