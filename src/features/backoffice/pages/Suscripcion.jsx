@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { CreditCard, CheckCircle2, AlertCircle, ShieldAlert, Zap } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'sonner';
-import api from '../api/axiosConfig';
-import '../styles/Tablas.css';
+import { getPlanes, createCheckoutSession } from '../api/backofficeApi';
+
 
 const Suscripcion = () => {
   const { userProfile } = useAuth();
@@ -12,7 +12,7 @@ const Suscripcion = () => {
   const [frecuencia, setFrecuencia] = useState('MENSUAL');
 
   useEffect(() => {
-      api.get('/planes')
+      getPlanes()
          .then(res => setPlanes(res.data.filter(p => p.activo)))
          .catch(err => console.error("Error cargando planes", err));
   }, []);
@@ -42,7 +42,7 @@ const Suscripcion = () => {
     const toastId = toast.loading(`Generando link de pago seguro...`);
     setCargando(true);
     try {
-      const response = await api.post('/suscripciones/checkout', { planId });
+      const response = await createCheckoutSession(planId);
       const { checkoutUrl } = response.data;
       
       toast.success('Redirigiendo a MercadoPago...', { id: toastId });

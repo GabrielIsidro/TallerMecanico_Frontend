@@ -8,10 +8,13 @@ import {
   Trash2, 
   ArrowRight,
   CheckCircle,
-  Plus
+  Plus,
+  ClipboardList,
+  MessageSquare,
+  Edit2
 } from 'lucide-react'
-import api from '../api/axiosConfig'
-import '../styles/Tablas.css'
+import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+
 
 function Cotizador() {
   const [servicios, setServicios] = useState([]) 
@@ -21,10 +24,12 @@ function Cotizador() {
   const [gruposExpandidos, setGruposExpandidos] = useState({})
   const [vehiculos, setVehiculos] = useState([])
 
+    // Simplificado para el ingreso rápido
+
   useEffect(() => {
     Promise.all([
-      api.get('/servicios'),
-      api.get('/vehiculos')
+      getServicios(),
+      getVehiculos()
     ])
     .then(([resServicios, resVehiculos]) => {
       setServicios(resServicios.data);
@@ -33,24 +38,13 @@ function Cotizador() {
     .catch(err => console.error("Error cargando datos:", err));
   }, [])
 
-  const getPrecioCalculado = (servicio) => {
-    if (!vehiculoId) return servicio.precioA || 0; 
-    const autoSeleccionado = vehiculos.find(v => v.id.toString() === vehiculoId.toString());
-    if (!autoSeleccionado) return servicio.precioA || 0;
-
-    if (autoSeleccionado.categoria === 'CATEGORIA_B') return servicio.precioB || 0;
-    if (autoSeleccionado.categoria === 'CATEGORIA_C') return servicio.precioC || 0;
-    return servicio.precioA || 0;
-  }
-
   const agregarAlCarrito = (servicio) => {
     if (!vehiculoId) {
-        toast.warning("Por favor, selecciona el vehículo primero para calcular el precio exacto.");
+        toast.warning("Por favor, selecciona el vehículo primero.");
         return;
     }
     
-    // Forzamos a que sea un número seguro
-    const precioAplicado = Number(getPrecioCalculado(servicio)) || 0;
+    const precioAplicado = Number(servicio.precioSugerido) || 0;
     
     const item = { 
         tipoServicio: { id: servicio.id }, 
@@ -66,34 +60,50 @@ function Cotizador() {
     setCarrito(nuevoCarrito);
   }
 
+  const actualizarPrecioCarrito = (index, nuevoPrecio) => {
+    const nuevoCarrito = [...carrito];
+    nuevoCarrito[index].precioEstimado = Number(nuevoPrecio);
+    setCarrito(nuevoCarrito);
+  }
+
+    const [descripcionIngreso, setDescripcionIngreso] = useState('');
+    const [kilometraje, setKilometraje] = useState('');
+
   const generarPresupuesto = () => {
     if (!vehiculoId) {
       toast.warning("Por favor, selecciona el vehículo primero.");
       return;
     }
-    if (carrito.length === 0) {
-      toast.warning("Agrega al menos un servicio al carrito.");
-      return;
-    }
+
     
     let descripcionAutomatica = carrito.map(item => item.nombre).join(" + ");
     if (!descripcionAutomatica) descripcionAutomatica = "Varios";
 
     const orden = {
       vehiculoId: parseInt(vehiculoId),
-      descripcion: descripcionAutomatica,
-      items: carrito.map(item => ({ tipoServicio: { id: item.tipoServicio.id }, cantidad: 1 }))
+      descripcion: descripcionIngreso || descripcionAutomatica,
+      kilometraje: kilometraje ? parseInt(kilometraje) : null,
+      observacionesMecanico: '',
+      observacionesCliente: '',
+      checklist: '{}',
+      items: carrito.map(item => ({ 
+          tipoServicio: { id: item.tipoServicio.id }, 
+          cantidad: 1, 
+          precioUnitario: parseFloat(item.precioEstimado) 
+      }))
     }
 
-    const toastId = toast.loading("Generando cotización...");
+    const toastId = toast.loading("Generando cotización / orden...");
 
-    api.post('/ordenes', orden)
+    createOrden(orden)
     .then(res => {
         setPresupuesto(res.data);
         setCarrito([]); 
-        toast.success("¡Cotización generada exitosamente!", { id: toastId });
+        setDescripcionIngreso('');
+        setKilometraje('');
+        toast.success("¡Ingreso creado exitosamente!", { id: toastId });
     }) 
-    .catch(err => toast.error("Error al cotizar. Revisa la conexión con el servidor.", { id: toastId }))
+    .catch(err => toast.error("Error al crear. Revisa la conexión con el servidor.", { id: toastId }))
   }
 
   const serviciosAgrupados = servicios.reduce((acumulador, servicio) => {
@@ -110,6 +120,8 @@ function Cotizador() {
 
   const totalEstimadoCarrito = carrito.reduce((sum, item) => sum + item.precioEstimado, 0);
 
+
+
   return (
     <div className="tb-container">
         <header className="tb-header">
@@ -118,18 +130,19 @@ function Cotizador() {
               <div style={{ background: '#eff6ff', padding: '10px', borderRadius: '10px', display: 'flex' }}>
                 <Calculator size={26} color="#3b82f6" />
               </div>
-              Nuevo Presupuesto
+              Nuevo Ingreso
             </h1>
-            <p className="tb-subtitle">Selecciona los servicios para armar la cotización oficial.</p>
+            <p className="tb-subtitle">Registrá la entrada de un vehículo y estimá un presupuesto inicial.</p>
           </div>
         </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr', gap: '30px' }}>
           
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {/* SELECCIÓN DE VEHÍCULO */}
             <div className="tb-card">
               <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
-                <Car size={20}/> Selección de Vehículo
+                <Car size={20}/> 1. Selección de Vehículo
               </h3>
               <select 
                 value={vehiculoId}
@@ -144,18 +157,45 @@ function Cotizador() {
                 <option value="">-- Buscar y seleccionar vehículo --</option>
                 {vehiculos.map(v => (
                   <option key={v.id} value={v.id}>
-                    [{v.patente}] - {v.marca} {v.modelo} {v.cliente ? `(${v.cliente.nombreCliente})` : ''} - {v.categoria}
+                    [{v.patente}] - {v.marca} {v.modelo} {v.cliente ? `(${v.cliente.nombreCliente})` : ''}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="tb-card" style={{ marginTop: '20px' }}>
+            {/* DATOS DE INGRESO */}
+            <div className="tb-card">
               <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
-                <Wrench size={20}/> Catálogo de Servicios
+                <MessageSquare size={20}/> 2. Datos del Ingreso
+              </h3>
+              <div style={{ padding: '0 20px 20px 20px' }}>
+                  <label className="tb-label">Motivo de Ingreso / Falla:</label>
+                  <textarea 
+                      value={descripcionIngreso}
+                      onChange={(e) => setDescripcionIngreso(e.target.value)}
+                      className="tb-input" 
+                      style={{ minHeight: '100px', border: '2px solid #cbd5e1', resize: 'vertical', marginBottom: '15px' }}
+                      placeholder="Ej: Pierde aceite, hace ruido al frenar, service de 10.000km..."
+                  />
+                  <label className="tb-label">Kilometraje Actual (KM):</label>
+                  <input 
+                      type="number"
+                      value={kilometraje}
+                      onChange={(e) => setKilometraje(e.target.value)}
+                      className="tb-input"
+                      placeholder="Ej: 150000"
+                      style={{ border: '1px solid #cbd5e1', width: '50%' }}
+                  />
+              </div>
+            </div>
+
+            {/* CATALOGO */}
+            <div className="tb-card">
+              <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
+                <Wrench size={20}/> 3. Servicios guardados (Opcional)
               </h3>
               
-              <div style={{ maxHeight: '450px', overflowY: 'auto', paddingRight: '10px' }}>
+              <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '10px' }}>
                 {Object.keys(serviciosAgrupados).map((nombreGrupo) => (
                     <div key={nombreGrupo} style={{ marginBottom: '10px' }}>
                         <div 
@@ -174,8 +214,8 @@ function Cotizador() {
                                       <tr key={s.id} style={{borderBottom: '1px solid #f1f5f9'}}>
                                         <td style={{padding: '10px 5px', color:'#334155'}}>
                                             <div style={{ fontWeight: '500' }}>{s.descripcion}</div>
-                                            <div style={{ fontSize: '0.85em', color: '#166534', fontWeight: 'bold' }}>
-                                                ${getPrecioCalculado(s).toLocaleString()}
+                                            <div style={{ fontSize: '0.85em', color: '#64748b' }}>
+                                                Sug: ${Number(s.precioSugerido || 0).toLocaleString()}
                                             </div>
                                         </td>
                                         <td style={{width: '100px', textAlign: 'right', padding: '10px 5px'}}>
@@ -196,38 +236,47 @@ function Cotizador() {
           </div>
 
           <div>
-            <div className="tb-card" style={{ borderTop: '5px solid #3b82f6' }}>
+            <div className="tb-card" style={{ borderTop: '5px solid #3b82f6', position: 'sticky', top: '20px' }}>
               <h3 className="tb-title" style={{ color: '#1e40af', fontSize: '1.2em' }}>
-                <ShoppingCart size={20}/> Resumen
+                <ShoppingCart size={20}/> 4. Servicios guardados
               </h3>
               
               {carrito.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>El carrito está vacío</div>
+                <div style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>Agrega servicios a la orden</div>
               ) : (
                 <>
-                    <ul style={{ listStyle: 'none', padding: 0, maxHeight: '250px', overflowY: 'auto' }}>
+                    <ul style={{ listStyle: 'none', padding: 0, maxHeight: '350px', overflowY: 'auto' }}>
                     {carrito.map((item, index) => (
-                        <li key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
-                            <div>
-                                <div style={{ fontSize: '0.95em', color:'#334155' }}>{item.nombre}</div>
-                                <div style={{ fontSize: '0.85em', color:'#64748b', fontWeight: 'bold' }}>${item.precioEstimado.toLocaleString()}</div>
+                        <li key={index} style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                                <div style={{ fontSize: '0.95em', color:'#334155', fontWeight: 'bold' }}>{item.nombre}</div>
+                                <button className="tb-btn-icon tb-btn-delete" style={{ padding: '4px', background: 'transparent', color: '#ef4444' }} onClick={() => quitarDelCarrito(index)}>
+                                    <Trash2 size={16}/>
+                                </button>
                             </div>
-                            <button className="tb-btn-icon tb-btn-delete" onClick={() => quitarDelCarrito(index)}>
-                                <Trash2 size={16}/>
-                            </button>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '0.9em', color: '#64748b' }}>Precio: $</span>
+                                <input 
+                                    type="number"
+                                    value={item.precioEstimado}
+                                    onChange={(e) => actualizarPrecioCarrito(index, e.target.value)}
+                                    style={{ padding: '4px 8px', border: '1px solid #94a3b8', borderRadius: '4px', width: '100px', fontWeight: 'bold', color: '#166534' }}
+                                />
+                                <Edit2 size={14} color="#94a3b8"/>
+                            </div>
                         </li>
                     ))}
                     </ul>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px dashed #cbd5e1', paddingTop: '15px', marginTop: '10px' }}>
-                        <span style={{ fontWeight: 'bold', color: '#475569' }}>Total Est.:</span>
-                        <span style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#166534' }}>${totalEstimadoCarrito.toLocaleString()}</span>
+                        <span style={{ fontWeight: 'bold', color: '#475569' }}>Total:</span>
+                        <span style={{ fontSize: '1.4em', fontWeight: 'bold', color: '#166534' }}>${totalEstimadoCarrito.toLocaleString()}</span>
                     </div>
                 </>
               )}
 
               <div style={{marginTop: '20px'}}>
-                  <button className="tb-btn-save" onClick={generarPresupuesto} style={{width: '100%', background: '#3b82f6'}}>
-                    COTIZAR AHORA <ArrowRight size={18}/>
+                  <button className="tb-btn-save" onClick={generarPresupuesto} style={{width: '100%', background: '#10b981', padding: '12px'}}>
+                    REGISTRAR INGRESO <ArrowRight size={18}/>
                   </button>
               </div>
             </div>
@@ -239,8 +288,7 @@ function Cotizador() {
                 <h3 style={{ color: '#166534', margin: '10px 0' }}>Total Oficial: ${presupuesto.costoTotal.toLocaleString()}</h3>
                 <div style={{ background:'white', padding:'10px', borderRadius:'8px', marginTop:'10px', color: '#333'}}>
                   Orden N°: <strong>#{presupuesto.id}</strong> <br/>
-                  Vehículo: <strong>{presupuesto.vehiculo.modelo}</strong> <br/>
-                  <small>Categoría: {presupuesto.vehiculo.categoria}</small>
+                  Vehículo: <strong>{presupuesto.vehiculo.modelo}</strong>
                 </div>
               </div>
             )}

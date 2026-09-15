@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../api/axiosConfig'
+import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
-import '../styles/Dashboard.css';
+import { useAuth } from '../../../context/AuthContext';
+import './Dashboard.css';
 
 import { 
   FileEdit, 
@@ -52,9 +52,9 @@ function Dashboard() {
     try {
       const config = { headers: authHeaders };
       const [resOrdenes, resVehiculos, resClientes] = await Promise.all([
-        api.get('/ordenes?size=1000', config),
-        api.get('/vehiculos', config),
-        api.get('/clientes?size=1000', config)
+        getOrdenes(0, 1000),
+        getVehiculos(),
+        getClientes(0, 1000)
       ]);
 
       const ordenes = resOrdenes.data.content || resOrdenes.data || [];

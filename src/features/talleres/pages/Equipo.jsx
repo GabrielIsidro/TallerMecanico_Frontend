@@ -1,9 +1,9 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, Plus, UserX, UserPlus, Shield, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '../api/axiosConfig';
-import { useAuth } from '../context/AuthContext';
-import '../styles/Tablas.css';
+import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { useAuth } from '../../../context/AuthContext';
+
 
 const Equipo = () => {
   const { isMecanico } = useAuth();
@@ -24,11 +24,11 @@ const Equipo = () => {
   const cargarEquipo = async () => {
     try {
       setCargando(true);
-      const res = await api.get('/usuarios/equipo');
+      const res = await getEquipo();
       setEquipo(res.data);
     } catch (error) {
       console.error(error);
-      toast.error('Error al cargar el equipo de mecánicos');
+      toast.error('Error al cargar el equipo de mec�nicos');
     } finally {
       setCargando(false);
     }
@@ -37,14 +37,14 @@ const Equipo = () => {
   const agregarMecanico = async (e) => {
     e.preventDefault();
     if (!nombre || !email || !password) {
-      toast.warning('Completá los campos obligatorios');
+      toast.warning('Complet� los campos obligatorios');
       return;
     }
 
-    const toastId = toast.loading('Registrando mecánico...');
+    const toastId = toast.loading('Registrando mec�nico...');
     try {
-      await api.post('/usuarios/equipo', { nombre, apellido, email, password });
-      toast.success('Mecánico agregado correctamente', { id: toastId });
+      await createMiembroEquipo({ nombre, apellido, email, password });
+      toast.success('Mec�nico agregado correctamente', { id: toastId });
       setNombre('');
       setApellido('');
       setEmail('');
@@ -53,26 +53,26 @@ const Equipo = () => {
       cargarEquipo();
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data || 'Error al agregar mecánico', { id: toastId });
+      toast.error(error.response?.data || 'Error al agregar mec�nico', { id: toastId });
     }
   };
 
   const eliminarMecanico = async (id, nombreMecanico) => {
-    if (!window.confirm(`¿Seguro que querés dar de baja a ${nombreMecanico}? Perderá el acceso al sistema.`)) return;
+    if (!window.confirm(`�Seguro que quer�s dar de baja a ${nombreMecanico}? Perder� el acceso al sistema.`)) return;
 
     const toastId = toast.loading('Eliminando...');
     try {
-      await api.delete(`/usuarios/equipo/${id}`);
-      toast.success('Mecánico eliminado', { id: toastId });
+      await deleteMiembroEquipo(id);
+      toast.success('Mec�nico eliminado', { id: toastId });
       cargarEquipo();
     } catch (error) {
       console.error(error);
-      toast.error('Error al eliminar mecánico', { id: toastId });
+      toast.error('Error al eliminar mec�nico', { id: toastId });
     }
   };
 
   if (isMecanico()) {
-    return <div style={{ padding: '30px', textAlign: 'center', color: '#ef4444' }}>No tenés permisos para ver esta sección.</div>;
+    return <div style={{ padding: '30px', textAlign: 'center', color: '#ef4444' }}>No ten�s permisos para ver esta secci�n.</div>;
   }
 
   if (cargando) return <div className="tb-loading" style={{ padding: '30px' }}>Cargando equipo...</div>;
@@ -86,23 +86,23 @@ const Equipo = () => {
           <h1 className="tb-title" style={{ fontSize: '2.5rem' }}>
             <Users size={40} color="#8b5cf6" /> Mi Equipo
           </h1>
-          <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Administrá los accesos de tus mecánicos y empleados.</p>
+          <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Administr� los accesos de tus mec�nicos y empleados.</p>
         </div>
         <button 
           onClick={() => setMostrarForm(!mostrarForm)}
           className="tb-btn-add"
           style={{ padding: '12px 24px', borderRadius: '12px', background: mostrarForm ? '#64748b' : '#8b5cf6' }}
         >
-          {mostrarForm ? 'Cancelar' : <><UserPlus size={20} /> Nuevo Mecánico</>}
+          {mostrarForm ? 'Cancelar' : <><UserPlus size={20} /> Nuevo Mec�nico</>}
         </button>
       </div>
 
       {/* FORMULARIO */}
       {mostrarForm && (
         <div className="tb-card" style={{ padding: '30px', borderRadius: '20px', marginBottom: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ margin: '0 0 20px 0', color: '#1e293b' }}>Crear Cuenta de Mecánico</h2>
+          <h2 style={{ margin: '0 0 20px 0', color: '#1e293b' }}>Crear Cuenta de Mec�nico</h2>
           <p className="tb-subtitle" style={{ marginBottom: '20px' }}>
-            Los mecánicos solo pueden ver los vehículos, clientes y gestionar el estado de las órdenes de trabajo. No tienen acceso a facturación ni configuraciones.
+            Los mec�nicos solo pueden ver los veh�culos, clientes y gestionar el estado de las �rdenes de trabajo. No tienen acceso a facturaci�n ni configuraciones.
           </p>
           <form onSubmit={agregarMecanico} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', alignItems: 'end' }}>
             <div>
@@ -111,33 +111,33 @@ const Equipo = () => {
             </div>
             <div>
               <label className="tb-label">Apellido</label>
-              <input type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="tb-input" placeholder="López" />
+              <input type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="tb-input" placeholder="L�pez" />
             </div>
             <div>
               <label className="tb-label">Email (Usuario) *</label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="tb-input" placeholder="carlos@taller.com" required />
             </div>
             <div>
-              <label className="tb-label">Contraseña *</label>
+              <label className="tb-label">Contrase�a *</label>
               <input type="text" value={password} onChange={e => setPassword(e.target.value)} className="tb-input" placeholder="clave123" required />
             </div>
             <button type="submit" className="tb-btn-save" style={{ background: '#8b5cf6', height: '46px' }}>
-              Registrar Mecánico
+              Registrar Mec�nico
             </button>
           </form>
         </div>
       )}
 
-      {/* LISTA DE MECÁNICOS */}
+      {/* LISTA DE MEC�NICOS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
         
-        {/* Tarjeta del Dueño (Informativa) */}
+        {/* Tarjeta del Due�o (Informativa) */}
         <div className="tb-card" style={{ padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', background: '#f8fafc' }}>
           <div style={{ background: '#e0e7ff', padding: '15px', borderRadius: '15px' }}>
             <Shield size={30} color="#4f46e5" />
           </div>
           <div>
-            <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>Dueño / Admin</h3>
+            <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>Due�o / Admin</h3>
             <p style={{ margin: 0, color: '#64748b', fontSize: '0.9em' }}>Tiene acceso total al sistema.</p>
           </div>
         </div>
@@ -152,7 +152,7 @@ const Equipo = () => {
                 <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>{m.nombre} {m.apellido}</h3>
                 <p style={{ margin: 0, color: '#64748b', fontSize: '0.9em' }}>{m.email}</p>
                 <span className="tb-badge" style={{ marginTop: '5px', background: '#f1f5f9', color: '#475569' }}>
-                  MECÁNICO
+                  MEC�NICO
                 </span>
               </div>
             </div>
@@ -169,7 +169,7 @@ const Equipo = () => {
 
         {equipo.length === 0 && (
           <div className="tb-loading" style={{ gridColumn: '1 / -1', padding: '40px', background: 'white', borderRadius: '20px' }}>
-            Todavía no tenés mecánicos registrados en tu equipo.
+            Todav�a no ten�s mec�nicos registrados en tu equipo.
           </div>
         )}
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Building2, User, Phone, Mail, Plus, ShieldCheck, Trash2 } from 'lucide-react'
-import api from '../api/axiosConfig'
-import '../styles/SuperAdmin.css'
+import { getPlanes, updatePrecioPlan, updateEstadoPlan, getTalleres, createTaller, updateSuscripcionTaller, deleteTaller } from '../api/backofficeApi';
+import './SuperAdmin.css'
 
 function SuperAdmin() {
   const [talleres, setTalleres] = useState([])
@@ -30,29 +30,21 @@ function SuperAdmin() {
 
   const cargarPlanes = () => {
     setCargandoPlanes(true)
-    api.get('/admin/planes')
+    getPlanes()
       .then(res => {
-        setPlanes(res.data)
-        setCargandoPlanes(false)
+         setPlanes(res.data)
+         setCargandoPlanes(false)
       })
-      .catch(err => {
-        // Fallback si no está el endpoint admin, intentamos con el normal
-        api.get('/planes')
-          .then(res => {
-             setPlanes(res.data)
-             setCargandoPlanes(false)
-          })
-          .catch(e => {
-             console.error(e)
-             toast.error("Error al cargar los planes.")
-             setCargandoPlanes(false)
-          })
+      .catch(e => {
+         console.error(e)
+         toast.error("Error al cargar los planes.")
+         setCargandoPlanes(false)
       })
   }
 
   const guardarPrecioPlan = (id) => {
     const toastId = toast.loading("Actualizando plan...");
-    api.put(`/planes/admin/${id}`, { precio: nuevoPrecio })
+    updatePrecioPlan(id, nuevoPrecio)
       .then(() => {
         toast.success("Precio actualizado.", { id: toastId });
         setEditandoPlan(null);
@@ -66,7 +58,7 @@ function SuperAdmin() {
 
   const toggleEstadoPlan = (id, estadoActual) => {
     const toastId = toast.loading("Cambiando estado...");
-    api.put(`/planes/admin/${id}`, { activo: !estadoActual })
+    updateEstadoPlan(id, !estadoActual)
       .then(() => {
         toast.success("Estado del plan actualizado.", { id: toastId });
         cargarPlanes();
@@ -79,7 +71,7 @@ function SuperAdmin() {
 
   const cargarTalleres = () => {
     setCargando(true)
-    api.get('/talleres')
+    getTalleres()
       .then(res => {
         setTalleres(res.data)
         setCargando(false)
@@ -102,17 +94,16 @@ function SuperAdmin() {
     const toastId = toast.loading("Registrando nuevo inquilino...")
 
     const nuevoTaller = {
-        nombre,
-        titular,
-        telefono,
-        emailContacto,
-        password,
-        nombreAdmin,
-        apellidoAdmin,
-        estadoSuscripcion: 'PRUEBA_GRATUITA'
+        nombreTaller: nombre,
+        titular: titular,
+        telefono: telefono,
+        emailAdmin: emailContacto,
+        passwordAdmin: password,
+        nombreAdmin: nombreAdmin,
+        apellidoAdmin: apellidoAdmin
     }
 
-    api.post('/talleres', nuevoTaller)
+    createTaller(nuevoTaller)
     .then(() => {
         toast.success("¡Taller registrado con éxito!", { id: toastId })
         setNombre('')
@@ -132,7 +123,7 @@ function SuperAdmin() {
   const cambiarEstadoSuscripcion = (id, nuevoEstado) => {
     const toastId = toast.loading("Actualizando suscripción...");
 
-    api.patch(`/talleres/${id}/suscripcion?estado=${nuevoEstado}`)
+    updateSuscripcionTaller(id, nuevoEstado)
     .then(() => {
         toast.success(`Suscripción cambiada a: ${nuevoEstado.replace('_', ' ')}`, { id: toastId });
         cargarTalleres();
@@ -147,7 +138,7 @@ function SuperAdmin() {
         return;
     }
     const toastId = toast.loading("Eliminando taller...");
-    api.delete(`/admin/saas/talleres/${id}`)
+    deleteTaller(id)
     .then(() => {
         toast.success("Taller eliminado con éxito.", { id: toastId });
         cargarTalleres();

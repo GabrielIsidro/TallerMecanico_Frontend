@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import api from '../api/axiosConfig'
+import api from '../lib/axiosConfig'
 import {
   LayoutDashboard,
   FileText,
@@ -20,18 +20,21 @@ import {
 
 import { useAuth } from '../context/AuthContext'
 
-import Dashboard from './Dashboard'
-import Cotizador from './Cotizador'
-import Vehiculos from './Vehiculos'
-import Historial from './Historial'
-import Clientes from './Clientes'
-import Servicios from './Servicios'
-import SuperAdmin from './SuperAdmin'
-import MiPerfil from './MiPerfil'
-import Suscripcion from './Suscripcion'
-import Inventario from './Inventario'
-import Equipo from './Equipo'
-import '../styles/Dashboard.css'
+import { simulateWebhook } from '../features/backoffice/api/backofficeApi';
+
+import Dashboard from '../features/talleres/pages/Dashboard'
+import Cotizador from '../features/talleres/pages/Cotizador'
+import Vehiculos from '../features/talleres/pages/Vehiculos'
+import Historial from '../features/talleres/pages/Historial'
+import Clientes from '../features/talleres/pages/Clientes'
+import Servicios from '../features/talleres/pages/Servicios'
+import SuperAdmin from '../features/backoffice/pages/SuperAdmin'
+import MiPerfil from '../features/talleres/pages/MiPerfil'
+import Suscripcion from '../features/backoffice/pages/Suscripcion'
+import Inventario from '../features/talleres/pages/Inventario'
+import Equipo from '../features/talleres/pages/Equipo'
+import ProcesarOrden from '../features/talleres/pages/ProcesarOrden'
+import '../features/talleres/pages/Dashboard.css'
 
 function DashboardLayout() {
   const { logout, userProfile, isSuperAdmin, isMecanico } = useAuth();
@@ -43,25 +46,19 @@ function DashboardLayout() {
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('mp_simulation') === 'success') {
-        const planId = urlParams.get('planId') || '';
-        
-        // Simular webhook local llamando al backend para que realmente procese la suscripción simulada
-        api.post('/suscripciones/webhook', { data: { id: 'simulado' }, planId: planId })
-          .then(() => {
-             toast.success("¡Pago acreditado con éxito! Gracias por suscribirte.");
-             // Limpiar URL para que no vuelva a saltar si recarga
-             window.history.replaceState({}, document.title, "/");
-             
-             // Recargar la ventana completa para que se refresque el perfil y las rutas (Inventario, etc)
-             setTimeout(() => {
-               window.location.reload();
-             }, 2000);
-          })
-          .catch(e => {
-             console.error("Error en webhook simulado", e);
-             toast.error("Error al procesar el pago simulado.");
-          });
+    if (urlParams.get('mp_simulation') === 'success') {
+      const planId = urlParams.get('planId') || '';
+
+      // Simular webhook local llamando al backend para que realmente procese la suscripción simulada
+      simulateWebhook(planId)
+        .then(() => {
+            toast.success("¡Pago exitoso! Tu suscripción ha sido activada.");
+            setTimeout(() => window.location.href = '/', 2000);
+        })
+        .catch(err => {
+            console.error("Error en simulación", err);
+            toast.error("Error al procesar el pago simulado.");
+        });
     }
   }, []);
 
@@ -71,9 +68,9 @@ function DashboardLayout() {
 
   const menuItems = esSuperAdminVal ? [] : [
     { path: '/', name: 'Inicio', icon: LayoutDashboard },
-    { path: '/cotizador', name: 'Cotizador', icon: FileText },
+    { path: '/cotizador', name: 'Nuevo Ingreso', icon: FileText },
     { path: '/vehiculos', name: 'Vehículos', icon: Car },
-    { path: '/historial', name: 'Historial', icon: History },
+    { path: '/historial', name: 'Órdenes de Trabajo', icon: History },
     { path: '/clientes', name: 'Clientes', icon: Users },
     { path: '/servicios', name: 'Servicios', icon: Wrench },
     { path: '/inventario', name: 'Inventario', icon: PackageSearch, adminOnly: true, proOnly: true },
@@ -90,18 +87,18 @@ function DashboardLayout() {
         </div>
         <nav>
           {menuItems.map((item) => {
-              if (item.adminOnly && isMecanico()) return null;
-              if (item.proOnly && userProfile?.tipoPlan !== 'PRO') return null;
-              
-              return (
-                <div 
-                  key={item.path}
-                  className={`menu-item ${isActive(item.path) ? 'active' : ''}`} 
-                  onClick={() => navigate(item.path)}
-                >
-                  <item.icon size={20} /> {item.name}
-                </div>
-              )
+            if (item.adminOnly && isMecanico()) return null;
+            if (item.proOnly && userProfile?.tipoPlan !== 'PRO') return null;
+
+            return (
+              <div
+                key={item.path}
+                className={`menu-item ${isActive(item.path) ? 'active' : ''}`}
+                onClick={() => navigate(item.path)}
+              >
+                <item.icon size={20} /> {item.name}
+              </div>
+            )
           })}
 
           {esSuperAdminVal && (
@@ -174,10 +171,11 @@ function DashboardLayout() {
 
         <Routes>
           <Route path="/" element={esSuperAdminVal ? <SuperAdmin /> : <Dashboard />} />
-          
+
           {!esSuperAdminVal && (
             <>
-              <Route path="/cotizador" element={isMecanico() ? <Navigate to="/" /> : <Cotizador />} />
+              <Route path="/cotizador" element={<Cotizador />} />
+              <Route path="/ordenes/:id" element={<ProcesarOrden />} />
               <Route path="/vehiculos" element={<Vehiculos />} />
               <Route path="/historial" element={<Historial />} />
               <Route path="/clientes" element={<Clientes />} />

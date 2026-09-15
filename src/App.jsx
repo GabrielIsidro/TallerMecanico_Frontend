@@ -1,9 +1,9 @@
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import './App.css';
-import Login from './components/Login';
+import './assets/styles/global.css';
+import Login from './features/auth/components/Login';
 import PrivateRoute from './components/PrivateRoute';
-import DashboardLayout from './components/DashboardLayout';
+import DashboardLayout from './layouts/DashboardLayout';
 
 function App() {
   return (

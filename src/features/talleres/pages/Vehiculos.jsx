@@ -12,8 +12,8 @@ import {
   AlertTriangle,
   Car
 } from 'lucide-react'
-import api from '../api/axiosConfig'
-import '../styles/Tablas.css'
+import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+
 
 function Vehiculos() {
   const [vehiculos, setVehiculos] = useState([])
@@ -28,10 +28,8 @@ function Vehiculos() {
     modelo: '',
     marca: '',
     anio: 2024,
-    categoria: 'CATEGORIA_A',
     numeroMotor: '',
     numeroChasis: '',
-    kilometraje: '',
     proximoServiceKm: '',
     cliente: null
   })
@@ -42,7 +40,7 @@ function Vehiculos() {
   }, [])
 
   const cargarVehiculos = () => {
-    api.get('/vehiculos')
+    getVehiculos()
       .then(res => setVehiculos(res.data))
       .catch(err => {
         toast.error("Error al conectar con el servidor. Revisa si el Back está prendido.");
@@ -50,7 +48,7 @@ function Vehiculos() {
   }
 
   const cargarClientes = () => {
-    api.get('/clientes?size=1000')
+    getClientes(0, 1000)
       .then(res => setClientes(res.data.content || res.data || []))
       .catch(err => console.error(err))
   }
@@ -63,13 +61,12 @@ function Vehiculos() {
 
     const autoAEnviar = {
         ...nuevoAuto,
-        kilometraje: nuevoAuto.kilometraje ? parseInt(nuevoAuto.kilometraje) : null,
         proximoServiceKm: nuevoAuto.proximoServiceKm ? parseInt(nuevoAuto.proximoServiceKm) : null,
         anio: parseInt(nuevoAuto.anio) || 2024
     };
 
     const url = modoEdicion ? `/vehiculos/${idEditar}` : '/vehiculos';
-    const request = modoEdicion ? api.put(url, autoAEnviar) : api.post(url, autoAEnviar);
+    const request = modoEdicion ? updateVehiculo(modoEdicion ? idEditando : null, autoAEnviar) : createVehiculo(autoAEnviar);
 
     const toastId = toast.loading(modoEdicion ? "Actualizando vehículo..." : "Registrando vehículo...");
 
@@ -92,10 +89,8 @@ function Vehiculos() {
         modelo: auto.modelo,
         marca: auto.marca,
         anio: auto.anio,
-        categoria: auto.categoria,
         numeroMotor: auto.numeroMotor || '',
         numeroChasis: auto.numeroChasis || '', 
-        kilometraje: auto.kilometraje || '',
         proximoServiceKm: auto.proximoServiceKm || '',
         cliente: auto.cliente
     })
@@ -104,7 +99,7 @@ function Vehiculos() {
   const eliminarVehiculo = (id) => {
     if(!confirm("¿Estás seguro de que deseas borrar este vehículo?")) return;
     
-    api.delete(`/vehiculos/${id}`)
+    deleteVehiculo(id)
     .then(() => {
         toast.success("Vehículo eliminado del sistema.");
         cargarVehiculos();
@@ -117,7 +112,7 @@ function Vehiculos() {
   const terminarEdicion = () => {
     setModoEdicion(false);
     setIdEditar(null);
-    setNuevoAuto({ patente: '', modelo: '', marca: '', anio: 2024, categoria: 'CATEGORIA_A', numeroMotor: '', numeroChasis: '', kilometraje: '', proximoServiceKm: '', cliente: null });
+    setNuevoAuto({ patente: '', modelo: '', marca: '', anio: 2024, numeroMotor: '', numeroChasis: '', proximoServiceKm: '', cliente: null });
   }
 
   const handleClienteChange = (e) => {
@@ -178,24 +173,7 @@ function Vehiculos() {
           <div><label className="tb-label">Patente</label><input value={nuevoAuto.patente} onChange={e => setNuevoAuto({...nuevoAuto, patente: e.target.value})} className="tb-input" /></div>
           <div><label className="tb-label">Marca</label><input value={nuevoAuto.marca} onChange={e => setNuevoAuto({...nuevoAuto, marca: e.target.value})} className="tb-input" /></div>
           <div><label className="tb-label">Modelo</label><input value={nuevoAuto.modelo} onChange={e => setNuevoAuto({...nuevoAuto, modelo: e.target.value})} className="tb-input" /></div>
-          <div>
-              <label className="tb-label" style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                  Categoría
-                  <button 
-                    type="button"
-                    onClick={() => setMostrarAyudaCat(true)} 
-                    style={{ background:'#3b82f6', color:'white', border:'none', borderRadius:'50%', width:'18px', height:'18px', fontSize:'11px', cursor:'pointer', display:'flex', justifyContent:'center', alignItems:'center', fontWeight:'bold' }} 
-                    title="Ver referencias de ATAIA"
-                  >
-                    <HelpCircle size={12} color="white"/>
-                  </button>
-              </label>
-              <select value={nuevoAuto.categoria} onChange={e => setNuevoAuto({...nuevoAuto, categoria: e.target.value})} className="tb-select">
-                <option value="CATEGORIA_A">Cat. A (Base)</option>
-                <option value="CATEGORIA_B">Cat. B (Full)</option>
-                <option value="CATEGORIA_C">Cat. C (Alta Gama/4x4)</option>
-              </select>
-          </div>
+
 
           <div style={{ borderTop: '1px dashed #cbd5e1', gridColumn: '1 / -1', margin: '10px 0', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <FileText size={18} color="#475569" />
@@ -204,7 +182,6 @@ function Vehiculos() {
 
           <div><label className="tb-label">N° Motor</label><input placeholder="Ej: FMB123..." value={nuevoAuto.numeroMotor} onChange={e => setNuevoAuto({...nuevoAuto, numeroMotor: e.target.value})} className="tb-input" /></div>
           <div><label className="tb-label">N° Chasis / VIN</label><input placeholder="Ej: 8AD123..." value={nuevoAuto.numeroChasis} onChange={e => setNuevoAuto({...nuevoAuto, numeroChasis: e.target.value})} className="tb-input" /></div>
-          <div><label className="tb-label">KM Actual</label><input type="number" placeholder="Ej: 150000" value={nuevoAuto.kilometraje} onChange={e => setNuevoAuto({...nuevoAuto, kilometraje: e.target.value})} className="tb-input" /></div>
           <div><label className="tb-label" style={{color: '#1d4ed8'}}>Próximo Service (KM)</label><input type="number" placeholder="Ej: 160000" value={nuevoAuto.proximoServiceKm} onChange={e => setNuevoAuto({...nuevoAuto, proximoServiceKm: e.target.value})} className="tb-input" style={{border: '2px solid #93c5fd', backgroundColor: '#eff6ff'}} /></div>
 
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -258,7 +235,7 @@ function Vehiculos() {
                         </td>
                         <td className="tb-td">
                             <div style={{ background: '#1e293b', color: 'white', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', fontSize:'0.85em', display: 'inline-block', marginBottom: '4px' }}>{v.patente}</div>
-                            <div style={{ fontSize: '0.9em' }}>{v.marca} {v.modelo} <span className="tb-td-muted">({v.categoria.replace('CATEGORIA_','')})</span></div>
+                            <div style={{ fontSize: '0.9em' }}>{v.marca} {v.modelo}</div>
                         </td>
                         <td className="tb-td">
                             <div style={{ marginBottom: '5px' }}>
@@ -288,47 +265,7 @@ function Vehiculos() {
         )}
       </div>
 
-      {/* MODAL REFERENCIA ATAIA */}
-      {mostrarAyudaCat && (
-        <div className="tb-modal-overlay" onClick={() => setMostrarAyudaCat(false)}>
-            <div className="tb-modal-content" onClick={e => e.stopPropagation()} style={{ width: '650px', maxWidth: '95%', position: 'relative' }}>
-                <button onClick={() => setMostrarAyudaCat(false)} style={{ position:'absolute', top:'15px', right:'15px', background:'none', border:'none', fontSize:'20px', cursor:'pointer', color: '#64748b' }}>✖</button>
-                
-                <h2 className="tb-modal-header" style={{ color: '#1e40af', borderBottom: '2px solid #e2e8f0', paddingBottom: '10px' }}>
-                    <Info size={24} color="#1e40af"/> Referencia de Categorías (ATAIA)
-                </h2>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-                    
-                    <div style={{ padding: '15px', background: '#ecfdf5', borderLeft: '5px solid #10b981', borderRadius: '6px' }}>
-                        <h4 style={{ margin: '0 0 8px 0', color: '#065f46', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA A</h4>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#064e3b' }}>
-                            <strong>Tipo de Auto:</strong> Vehículos pequeños a medianos sin equipamiento (Base) con motor nafta o Diesel 8 válvulas.
-                        </p>
-                    </div>
 
-                    <div style={{ padding: '15px', background: '#fffbeb', borderLeft: '5px solid #f59e0b', borderRadius: '6px' }}>
-                        <h4 style={{ margin: '0 0 8px 0', color: '#b45309', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA B</h4>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#78350f' }}>
-                            <strong>Tipo de Auto:</strong> Vehículos medianos equipamiento full con motor nafta o Diesel 16v.
-                        </p>
-                    </div>
-
-                    <div style={{ padding: '15px', background: '#f5f3ff', borderLeft: '5px solid #8b5cf6', borderRadius: '6px' }}>
-                        <h4 style={{ margin: '0 0 8px 0', color: '#5b21b6', fontSize: '1.1em' }}>VEHÍCULOS CATEGORÍA C</h4>
-                        <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', color: '#4c1d95' }}>
-                            <strong>Tipo de Auto:</strong> Vehículos de alta gama y pick up 4x4.
-                        </p>
-                    </div>
-
-                </div>
-
-                <div className="tb-modal-actions" style={{ justifyContent: 'center', marginTop: '25px' }}>
-                    <button className="tb-btn-save" onClick={() => setMostrarAyudaCat(false)} style={{ padding: '10px 30px', background: '#3b82f6' }}>¡Entendido!</button>
-                </div>
-            </div>
-        </div>
-      )}
 
     </div>
   )

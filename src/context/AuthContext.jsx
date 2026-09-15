@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import api from '../api/axiosConfig';
+import api from '../lib/axiosConfig';
 import { jwtDecode } from 'jwt-decode';
 
 export const AuthContext = createContext();
@@ -17,12 +17,28 @@ export const AuthProvider = ({ children }) => {
         try {
           // Decodificamos el token para intentar sacar el rol (o podemos usar el endpoint /me)
           const decoded = jwtDecode(token);
-          // Spring security puede guardarlo en 'role', 'authorities', o a veces sacamos todo de /me
+          console.log("Decoded JWT:", decoded);
           
           // Por seguridad o por diseño, hacemos fetch al perfil del usuario
-          const response = await api.get('/usuarios/me', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          let isAdmin = false;
+          const auths = decoded.authorities || decoded.role || "";
+          
+          if (Array.isArray(auths)) {
+              isAdmin = auths.some(a => a.includes('SUPERADMIN') || a.includes('SUPER_ADMIN'));
+          } else if (typeof auths === 'string') {
+              isAdmin = auths.includes('SUPERADMIN') || auths.includes('SUPER_ADMIN');
+          }
+          
+          let response;
+          if (isAdmin) {
+             response = await api.get('/backoffice/admin/saas/me', {
+               headers: { Authorization: `Bearer ${token}` }
+             });
+          } else {
+             response = await api.get('/talleres/usuarios/me', {
+               headers: { Authorization: `Bearer ${token}` }
+             });
+          }
           const userData = response.data;
           
           setUserProfile(userData);
@@ -58,7 +74,7 @@ export const AuthProvider = ({ children }) => {
   const isSuperAdmin = () => {
     // Ajustar según como devuelva el rol el backend (puede ser 'ROLE_SUPER_ADMIN')
     if (!role) return false;
-    return role.includes('SUPER_ADMIN');
+    return role.includes('SUPERADMIN') || role.includes('SUPER_ADMIN');
   };
 
   const isMecanico = () => {
