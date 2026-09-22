@@ -82,6 +82,10 @@ export const AuthProvider = ({ children }) => {
     return role.includes('MECANICO');
   };
 
+  const actualizarPasswordCompletada = () => {
+    setUserProfile(prev => prev ? ({ ...prev, debeCambiarPassword: false }) : prev);
+  };
+
   return (
     <AuthContext.Provider value={{ 
       token, 
@@ -91,7 +95,8 @@ export const AuthProvider = ({ children }) => {
       logout, 
       loading,
       isSuperAdmin,
-      isMecanico
+      isMecanico,
+      actualizarPasswordCompletada
     }}>
       {children}
     </AuthContext.Provider>

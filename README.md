@@ -1,6 +1,6 @@
-# TuTaller SaaS - Frontend
+# PatitoFix - Frontend
 
-Este es el frontend de la plataforma "TuTaller SaaS", un sistema de gestión integral para talleres mecánicos. Está desarrollado utilizando React (potenciado por Vite) y diseñado para ser una Single Page Application (SPA) rápida e interactiva.
+Este es el frontend de la plataforma "PatitoFix", un sistema de gestión integral para talleres mecánicos (SaaS Multi-Tenant). Está desarrollado utilizando React (potenciado por Vite) y diseñado para ser una Single Page Application (SPA) rápida e interactiva.
 
 ## 🚀 Tecnologías Principales
 

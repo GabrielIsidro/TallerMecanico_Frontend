@@ -15,11 +15,13 @@ import {
   ShieldCheck,
   User,
   CreditCard,
-  UserPlus
+  UserPlus,
+  Lock
 } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
 import ProtectedRoute from '../components/ProtectedRoute';
+import logoApp from '../assets/images/NuevoLogo.png';
 
 import { simulateWebhook } from '../features/backoffice/api/backofficeApi';
 
@@ -35,6 +37,7 @@ import Suscripcion from '../features/backoffice/pages/Suscripcion'
 import Inventario from '../features/talleres/pages/Inventario'
 import Equipo from '../features/talleres/pages/Equipo'
 import ProcesarOrden from '../features/talleres/pages/ProcesarOrden'
+import ModalCambioPasswordObligatorio from '../features/auth/components/ModalCambioPasswordObligatorio'
 import '../features/talleres/pages/Dashboard.css'
 
 function DashboardLayout() {
@@ -44,6 +47,19 @@ function DashboardLayout() {
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
 
   const esSuperAdminVal = isSuperAdmin();
+  const estaSuspendida = !esSuperAdminVal && userProfile?.estadoSuscripcion === 'SUSPENDIDA';
+  const estaVencida = !esSuperAdminVal && userProfile?.estadoSuscripcion === 'VENCIDA';
+
+  // Guardia de navegación para estados de suscripción
+  useEffect(() => {
+    if (estaSuspendida && location.pathname !== '/suscripcion' && location.pathname !== '/perfil') {
+      toast.error("Tu taller se encuentra suspendido por falta de pago. Regularizá tu plan para operar.", { id: 'guard-suspendida' });
+      navigate('/suscripcion', { replace: true });
+    } else if (estaVencida && location.pathname === '/cotizador') {
+      toast.warning("En período de gracia (modo solo lectura) no se pueden registrar nuevos ingresos.", { id: 'guard-vencida-cotizador' });
+      navigate('/suscripcion', { replace: true });
+    }
+  }, [estaSuspendida, estaVencida, location.pathname, navigate]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -53,12 +69,12 @@ function DashboardLayout() {
       // Simular webhook local llamando al backend para que realmente procese la suscripción simulada
       simulateWebhook(planId)
         .then(() => {
-            toast.success("¡Pago exitoso! Tu suscripción ha sido activada.");
-            setTimeout(() => window.location.href = '/', 2000);
+          toast.success("¡Pago exitoso! Tu suscripción ha sido activada.");
+          setTimeout(() => window.location.href = '/', 2000);
         })
         .catch(err => {
-            console.error("Error en simulación", err);
-            toast.error("Error al procesar el pago simulado.");
+          console.error("Error en simulación", err);
+          toast.error("Error al procesar el pago simulado.");
         });
     }
   }, []);
@@ -76,28 +92,54 @@ function DashboardLayout() {
     { path: '/servicios', name: 'Servicios', icon: Wrench },
     { path: '/inventario', name: 'Inventario', icon: PackageSearch, adminOnly: true, proOnly: true },
     { path: '/equipo', name: 'Mi Equipo', icon: UserPlus, adminOnly: true, proOnly: true },
-    { path: '/suscripcion', name: 'Mi Suscripción', icon: CreditCard, adminOnly: true },
   ];
 
   return (
     <div className="dashboard-layout">
       <aside className="sidebar">
-        <div className="logo">
-          <Wrench size={24} color="#fbbf24" style={{ marginRight: '10px' }} />
-          TuTaller SaaS
+        <div className="logo" onClick={() => navigate('/')} title="PatitoFix - Inicio">
+          <img 
+            src={logoApp} 
+            alt="PatitoFix - Gestión Integral para Talleres" 
+            className="sidebar-logo-img"
+          />
         </div>
         <nav>
           {menuItems.map((item) => {
             if (item.adminOnly && isMecanico()) return null;
             if (item.proOnly && userProfile?.tipoPlan !== 'PRO') return null;
 
+            const bloqueadoPorSuspension = estaSuspendida;
+            const bloqueadoPorGracia = estaVencida && item.path === '/cotizador';
+            const estaBloqueado = bloqueadoPorSuspension || bloqueadoPorGracia;
+
+            const handleClick = () => {
+              if (bloqueadoPorSuspension) {
+                toast.error("Tu suscripción está suspendida. Regularizá tu plan para acceder.", { id: 'nav-suspendida' });
+                navigate('/suscripcion');
+                return;
+              }
+              if (bloqueadoPorGracia) {
+                toast.warning("En período de gracia de solo lectura no se pueden registrar nuevos ingresos. Regularizá tu plan.", { id: 'nav-gracia' });
+                navigate('/suscripcion');
+                return;
+              }
+              navigate(item.path);
+            };
+
             return (
               <div
                 key={item.path}
                 className={`menu-item ${isActive(item.path) ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}
+                onClick={handleClick}
+                style={estaBloqueado ? { opacity: 0.5, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : {}}
               >
-                <item.icon size={20} /> {item.name}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <item.icon size={20} /> {item.name}
+                </div>
+                {estaBloqueado && (
+                  <Lock size={15} color={bloqueadoPorSuspension ? '#f59e0b' : '#ef4444'} />
+                )}
               </div>
             )
           })}
@@ -146,6 +188,19 @@ function DashboardLayout() {
                 Mi Perfil y Seguridad
               </div>
 
+              {!esSuperAdminVal && !isMecanico() && (
+                <div
+                  onClick={() => {
+                    navigate('/suscripcion');
+                    setMenuPerfilAbierto(false);
+                  }}
+                  className="dl-dropdown-item"
+                >
+                  <CreditCard size={18} color="#64748b" />
+                  Mi Suscripción y Planes
+                </div>
+              )}
+
               <div className="dl-dropdown-divider"></div>
 
               <div
@@ -181,29 +236,29 @@ function DashboardLayout() {
               <Route path="/historial" element={<Historial />} />
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/servicios" element={<Servicios />} />
-              <Route 
-                path="/inventario" 
+              <Route
+                path="/inventario"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN_TALLER']}>
                     <Inventario />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/equipo" 
+              <Route
+                path="/equipo"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN_TALLER']}>
                     <Equipo />
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/suscripcion" 
+              <Route
+                path="/suscripcion"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN_TALLER']}>
                     <Suscripcion />
                   </ProtectedRoute>
-                } 
+                }
               />
             </>
           )}
@@ -211,6 +266,8 @@ function DashboardLayout() {
           <Route path="/perfil" element={<MiPerfil />} />
         </Routes>
       </main>
+
+      {userProfile?.debeCambiarPassword && <ModalCambioPasswordObligatorio />}
     </div>
   )
 }

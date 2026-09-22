@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { 
   Calculator, 
@@ -11,13 +12,19 @@ import {
   Plus,
   ClipboardList,
   MessageSquare,
-  Edit2
+  Edit2,
+  AlertTriangle
 } from 'lucide-react'
 import { getServicios, getVehiculos, createOrden } from '../api/talleresApi';
 import { handleApiError } from '../../../utils/errorHandler';
+import { useAuth } from '../../../context/AuthContext';
 
 
 function Cotizador() {
+  const { userProfile, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const esSoloLectura = !isSuperAdmin() && (userProfile?.estadoSuscripcion === 'VENCIDA' || userProfile?.estadoSuscripcion === 'SUSPENDIDA');
+
   const [servicios, setServicios] = useState([]) 
   const [vehiculoId, setVehiculoId] = useState('') 
   const [carrito, setCarrito] = useState([]) 
@@ -74,6 +81,10 @@ function Cotizador() {
     const [kilometraje, setKilometraje] = useState('');
 
   const generarPresupuesto = () => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para crear nuevos ingresos.", { duration: 4000 });
+      return;
+    }
     if (!vehiculoId) {
       toast.warning("Por favor, selecciona el vehículo primero.");
       return;
@@ -139,9 +150,42 @@ function Cotizador() {
               </div>
               Nuevo Ingreso
             </h1>
-            <p className="tb-subtitle">Registrá la entrada de un vehículo y estimá un presupuesto inicial.</p>
           </div>
         </header>
+
+        {/* BANNER SOLO LECTURA */}
+        {esSoloLectura && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            color: '#b91c1c',
+            padding: '12px 18px',
+            borderRadius: '10px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <AlertTriangle size={20} />
+              <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. No se pueden generar nuevos ingresos de vehículos.</span>
+            </div>
+            <button 
+              onClick={() => navigate('/suscripcion')}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Regularizar Plan
+            </button>
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr', gap: '30px' }}>
           
@@ -282,7 +326,17 @@ function Cotizador() {
               )}
 
               <div style={{marginTop: '20px'}}>
-                  <button className="tb-btn-save" onClick={generarPresupuesto} style={{width: '100%', background: '#10b981', padding: '12px'}}>
+                  <button 
+                    className="tb-btn-save" 
+                    onClick={generarPresupuesto} 
+                    disabled={esSoloLectura}
+                    style={{
+                      width: '100%', 
+                      background: esSoloLectura ? '#94a3b8' : '#10b981', 
+                      padding: '12px',
+                      cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     REGISTRAR INGRESO <ArrowRight size={18}/>
                   </button>
               </div>

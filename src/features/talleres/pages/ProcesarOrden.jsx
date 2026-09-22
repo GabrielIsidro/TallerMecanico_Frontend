@@ -13,15 +13,19 @@ import {
   Save,
   ArrowLeft,
   Car,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react'
 import { getOrdenById, updateOrden, updateEstadoOrden, getServicios, getOrdenPdf } from '../api/talleresApi';
 import { handleApiError } from '../../../utils/errorHandler';
+import { useAuth } from '../../../context/AuthContext';
 
 
 function ProcesarOrden() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { userProfile, isSuperAdmin } = useAuth();
+  const esSoloLectura = !isSuperAdmin() && (userProfile?.estadoSuscripcion === 'VENCIDA' || userProfile?.estadoSuscripcion === 'SUSPENDIDA');
 
   const [orden, setOrden] = useState(null)
   const [servicios, setServicios] = useState([]) 
@@ -110,6 +114,10 @@ function ProcesarOrden() {
   }
 
   const agregarAlCarrito = (servicio) => {
+    if (esSoloLectura) {
+      toast.warning("Modo Solo Lectura: regularizá tu suscripción para agregar ítems a la orden.", { duration: 4000 });
+      return;
+    }
     const precioAplicado = Number(servicio.precioSugerido) || 0;
     
     const item = { 
@@ -122,17 +130,29 @@ function ProcesarOrden() {
   }
 
   const quitarDelCarrito = (indexToDelete) => {
+    if (esSoloLectura) {
+      toast.warning("Modo Solo Lectura: no podés quitar ítems.", { duration: 4000 });
+      return;
+    }
     const nuevoCarrito = carrito.filter((_, index) => index !== indexToDelete);
     setCarrito(nuevoCarrito);
   }
 
   const actualizarPrecioCarrito = (index, nuevoPrecio) => {
+    if (esSoloLectura) {
+      toast.warning("Modo Solo Lectura: no podés modificar precios.", { duration: 4000 });
+      return;
+    }
     const nuevoCarrito = [...carrito];
     nuevoCarrito[index].precioEstimado = Number(nuevoPrecio);
     setCarrito(nuevoCarrito);
   }
 
   const handleChecklistChange = (seccion, idx, campo, valor) => {
+    if (esSoloLectura) {
+      toast.warning("Modo Solo Lectura: el checklist no puede ser editado.", { duration: 4000 });
+      return;
+    }
     setChecklist(prev => {
         const nuevo = { ...prev };
         nuevo[seccion][idx][campo] = valor;
@@ -141,6 +161,10 @@ function ProcesarOrden() {
   }
 
   const guardarCambios = (finalizar = false) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para guardar avances o finalizar órdenes.", { duration: 4000 });
+      return;
+    }
     
     let descripcionAutomatica = carrito.map(item => item.nombre).join(" + ");
     if (!descripcionAutomatica) descripcionAutomatica = orden.descripcion;
@@ -283,6 +307,40 @@ function ProcesarOrden() {
             </div>
           </div>
         </header>
+
+        {/* BANNER SOLO LECTURA */}
+        {esSoloLectura && (
+          <div style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            color: '#b91c1c',
+            padding: '12px 18px',
+            borderRadius: '10px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <AlertTriangle size={20} />
+              <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. Podés consultar la orden y descargar el comprobante, pero no modificar datos.</span>
+            </div>
+            <button 
+              onClick={() => navigate('/suscripcion')}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              Regularizar Plan
+            </button>
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr', gap: '30px' }}>
           
@@ -435,10 +493,36 @@ function ProcesarOrden() {
               )}
 
               <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                  <button className="tb-btn-save" onClick={() => guardarCambios(false)} style={{width: '100%', background: '#3b82f6', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                  <button 
+                    className="tb-btn-save" 
+                    onClick={() => guardarCambios(false)} 
+                    disabled={esSoloLectura}
+                    style={{
+                      width: '100%', 
+                      background: esSoloLectura ? '#94a3b8' : '#3b82f6', 
+                      padding: '12px', 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     <Save size={18} style={{marginRight: '8px'}}/> GUARDAR AVANCE
                   </button>
-                  <button className="tb-btn-save" onClick={() => guardarCambios(true)} style={{width: '100%', background: '#10b981', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                  <button 
+                    className="tb-btn-save" 
+                    onClick={() => guardarCambios(true)} 
+                    disabled={esSoloLectura}
+                    style={{
+                      width: '100%', 
+                      background: esSoloLectura ? '#94a3b8' : '#10b981', 
+                      padding: '12px', 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                    }}
+                  >
                     <CheckCircle size={18} style={{marginRight: '8px'}}/> FINALIZAR ORDEN
                   </button>
                   <button type="button" className="tb-btn-save" onClick={descargarPDF} style={{width: '100%', background: '#64748b', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>

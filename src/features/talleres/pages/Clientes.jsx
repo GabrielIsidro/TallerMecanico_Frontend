@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { User, Building2, Phone, Mail, MapPin, IdCard, Trash2, Edit, PlusCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { User, Building2, Phone, Mail, MapPin, IdCard, Trash2, Edit, PlusCircle, Search, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
 import { getClientes, createCliente, updateCliente, deleteCliente } from '../api/talleresApi';
 import { handleApiError } from '../../../utils/errorHandler';
+import { useAuth } from '../../../context/AuthContext';
 
 function Clientes() {
+  const { userProfile, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const esSoloLectura = !isSuperAdmin() && (userProfile?.estadoSuscripcion === 'VENCIDA' || userProfile?.estadoSuscripcion === 'SUSPENDIDA');
+
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
   
@@ -58,6 +64,10 @@ function Clientes() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para guardar clientes.", { duration: 4000 });
+      return;
+    }
     if (!nombreCliente.trim()) {
       toast.warning("El Nombre o Razón Social es obligatorio.");
       return;
@@ -80,6 +90,10 @@ function Clientes() {
   };
 
   const eliminarCliente = async (id) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). No podés eliminar clientes.", { duration: 4000 });
+      return;
+    }
     if (!window.confirm("¿Estás seguro de eliminar este cliente?")) return;
     
     try {
@@ -92,6 +106,10 @@ function Clientes() {
   };
 
   const editarCliente = (cliente) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para editar clientes.", { duration: 4000 });
+      return;
+    }
     setIdEditando(cliente.id);
     setNombreCliente(cliente.nombreCliente || '');
     setEsEmpresa(cliente.esEmpresa || false);
@@ -123,6 +141,40 @@ function Clientes() {
           Gestión de Clientes
         </h1>
       </div>
+
+      {/* BANNER SOLO LECTURA SI CORRESPONDE */}
+      {esSoloLectura && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fca5a5',
+          color: '#b91c1c',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangle size={20} />
+            <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. Podés consultar los clientes pero no crear ni editarlos.</span>
+          </div>
+          <button 
+            onClick={() => navigate('/suscripcion')}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              padding: '6px 14px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Regularizar Plan
+          </button>
+        </div>
+      )}
 
       {/* FORMULARIO */}
       <div className="tb-card" style={{ padding: '25px', marginBottom: '30px' }}>
@@ -229,7 +281,18 @@ function Clientes() {
                 Cancelar
               </button>
             )}
-            <button type="submit" className="tb-btn-save" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#3b82f6' }}>
+            <button 
+              type="submit" 
+              className="tb-btn-save" 
+              disabled={esSoloLectura}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                background: esSoloLectura ? '#94a3b8' : '#3b82f6',
+                cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+              }}
+            >
               {idEditando ? <Edit size={18} /> : <PlusCircle size={18} />}
               {idEditando ? 'Guardar Cambios' : 'Agregar Cliente'}
             </button>
@@ -302,10 +365,28 @@ function Clientes() {
                     </td>
                     <td className="tb-td" style={{ textAlign: 'right' }}>
                       <div className="tb-actions" style={{ justifyContent: 'flex-end' }}>
-                        <button onClick={() => editarCliente(cliente)} className="tb-btn-icon" style={{ background: '#fef3c7', color: '#d97706' }} title="Editar">
+                        <button 
+                          onClick={() => editarCliente(cliente)} 
+                          className="tb-btn-icon" 
+                          style={{ 
+                            background: '#fef3c7', 
+                            color: '#d97706',
+                            opacity: esSoloLectura ? 0.4 : 1,
+                            cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                          }} 
+                          title={esSoloLectura ? "Modo solo lectura" : "Editar"}
+                        >
                           <Edit size={16} />
                         </button>
-                        <button onClick={() => eliminarCliente(cliente.id)} className="tb-btn-icon tb-btn-delete" title="Eliminar">
+                        <button 
+                          onClick={() => eliminarCliente(cliente.id)} 
+                          className="tb-btn-icon tb-btn-delete" 
+                          style={{
+                            opacity: esSoloLectura ? 0.4 : 1,
+                            cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                          }}
+                          title={esSoloLectura ? "Modo solo lectura" : "Eliminar"}
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>

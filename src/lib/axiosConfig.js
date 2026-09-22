@@ -44,6 +44,17 @@ api.interceptors.response.use(
           { id: 'forbidden-access', duration: 5000 }
         );
       }
+
+      // 402: Suscripción vencida o suspendida (Payment Required)
+      if (status === 402) {
+        const mensaje = error.response.data?.message || "Tu suscripción ha vencido. Por favor regularizá tu plan para continuar.";
+        toast.error(mensaje, { id: 'payment-required', duration: 5000 });
+        if (window.location.pathname !== '/suscripcion') {
+          setTimeout(() => {
+            window.location.href = '/suscripcion';
+          }, 1200);
+        }
+      }
     }
 
     return Promise.reject(error);

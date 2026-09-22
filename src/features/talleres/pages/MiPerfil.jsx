@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { User, Lock, KeyRound, ShieldCheck, Contact, Mail } from 'lucide-react';
+import { User, Lock, KeyRound, ShieldCheck, Contact, Mail, CreditCard, ExternalLink } from 'lucide-react';
 import { getMiPerfil, updateMiPerfil } from '../api/talleresApi';
 import { handleApiError } from '../../../utils/errorHandler';
 
 function MiPerfil() {
+  const navigate = useNavigate();
+
   // Estados para datos personales
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState(''); // El email no se edita, solo se muestra
+  const [tallerInfo, setTallerInfo] = useState(null);
 
   // Estados para la contraseña
   const [passwordActual, setPasswordActual] = useState('');
@@ -30,6 +34,13 @@ function MiPerfil() {
       setNombre(datos.nombre || '');
       setApellido(datos.apellido || '');
       setEmail(datos.email || ''); // Llenamos el mail real
+      setTallerInfo({
+        nombre: datos.tallerNombre,
+        estado: datos.estadoSuscripcion,
+        plan: datos.tipoPlan,
+        vencimiento: datos.fechaVencimiento,
+        rol: datos.rol
+      });
     } catch (error) {
       console.error(error);
       handleApiError(error, "Error de conexión al cargar perfil");
@@ -139,7 +150,64 @@ function MiPerfil() {
           </div>
         </div>
 
-        {/* SECCIÓN 2: SEGURIDAD (OPCIONAL) */}
+        {/* SECCIÓN 2: ESTADO DE LA SUSCRIPCIÓN DEL TALLER */}
+        {tallerInfo && (
+          <div className="tb-card" style={{ padding: '30px', marginBottom: '25px', background: '#ffffff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+              <h3 className="tb-title" style={{ margin: 0, fontSize: '1.2em' }}>
+                <CreditCard size={22} color="#3b82f6" />
+                Mi Suscripción ({tallerInfo.nombre || 'Taller'})
+              </h3>
+
+              {tallerInfo.rol === 'ADMIN_TALLER' && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/suscripcion')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: '#eff6ff',
+                    color: '#2563eb',
+                    border: '1px solid #bfdbfe',
+                    fontWeight: 600,
+                    fontSize: '0.9em',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ExternalLink size={15} /> Ver Planes y Mejorar
+                </button>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+              <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '0.82em', color: '#64748b', fontWeight: 600, marginBottom: '5px' }}>PLAN ACTUAL</div>
+                <div style={{ fontSize: '1.1em', fontWeight: 800, color: tallerInfo.plan === 'PRO' ? '#8b5cf6' : '#2563eb' }}>
+                  {tallerInfo.plan || 'BASE (Estándar)'}
+                </div>
+              </div>
+
+              <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '0.82em', color: '#64748b', fontWeight: 600, marginBottom: '5px' }}>ESTADO</div>
+                <div style={{ fontSize: '1.1em', fontWeight: 800, color: tallerInfo.estado === 'ACTIVA' ? '#10b981' : '#f59e0b' }}>
+                  {tallerInfo.estado ? tallerInfo.estado.replace('_', ' ') : 'ACTIVA'}
+                </div>
+              </div>
+
+              <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '0.82em', color: '#64748b', fontWeight: 600, marginBottom: '5px' }}>VENCIMIENTO</div>
+                <div style={{ fontSize: '1.05em', fontWeight: 700, color: '#334155' }}>
+                  {tallerInfo.vencimiento || 'Sin fecha de vencimiento'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECCIÓN 3: SEGURIDAD (OPCIONAL) */}
         <div className="tb-card" style={{ padding: '35px', marginBottom: '25px' }}>
           <h3 className="tb-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', fontSize: '1.2em' }}>
             <ShieldCheck size={22} color="#10b981" />

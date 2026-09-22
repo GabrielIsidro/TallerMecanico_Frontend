@@ -118,10 +118,10 @@ function Dashboard() {
     <div style={{ color: '#333' }}>
       
       {/* ALERTA DE SUSCRIPCIÓN */}
-      {userProfile && (userProfile.estadoSuscripcion === 'PRUEBA_GRATUITA' || userProfile.estadoSuscripcion === 'VENCIDA') && (
+      {userProfile && (userProfile.estadoSuscripcion === 'PRUEBA_GRATUITA' || userProfile.estadoSuscripcion === 'VENCIDA' || userProfile.estadoSuscripcion === 'SUSPENDIDA') && (
         <div style={{
-          background: userProfile.estadoSuscripcion === 'VENCIDA' ? '#fef2f2' : '#eff6ff',
-          border: `1px solid ${userProfile.estadoSuscripcion === 'VENCIDA' ? '#fca5a5' : '#bfdbfe'}`,
+          background: userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#fff7ed' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#fef2f2' : '#eff6ff'),
+          border: `1px solid ${userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#fdba74' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#fca5a5' : '#bfdbfe')}`,
           padding: '15px 20px',
           borderRadius: '12px',
           marginBottom: '20px',
@@ -129,21 +129,25 @@ function Dashboard() {
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: userProfile.estadoSuscripcion === 'VENCIDA' ? '#b91c1c' : '#1e40af' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#c2410c' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#b91c1c' : '#1e40af') }}>
             <AlertTriangle size={24} />
             <div>
               <strong style={{ display: 'block', fontSize: '1.1em' }}>
-                {userProfile.estadoSuscripcion === 'VENCIDA' ? '¡Tu suscripción ha vencido!' : 'Estás en tu período de prueba gratuita'}
+                {userProfile.estadoSuscripcion === 'SUSPENDIDA'
+                  ? '¡Tu suscripción se encuentra suspendida!'
+                  : (userProfile.estadoSuscripcion === 'VENCIDA' ? '¡Tu suscripción ha vencido!' : 'Estás en tu período de prueba gratuita')}
               </strong>
               <span style={{ fontSize: '0.9em' }}>
-                Para evitar interrupciones en el servicio, regularizá tu plan.
+                {userProfile.estadoSuscripcion === 'SUSPENDIDA'
+                  ? 'El período de gracia ha finalizado. Regularizá tu plan para continuar utilizando el servicio.'
+                  : 'Para evitar interrupciones en el servicio, regularizá tu plan.'}
               </span>
             </div>
           </div>
           <button 
             onClick={() => navigate('/suscripcion')}
             style={{
-              background: userProfile.estadoSuscripcion === 'VENCIDA' ? '#ef4444' : '#3b82f6',
+              background: userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#f97316' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#ef4444' : '#3b82f6'),
               color: 'white',
               border: 'none',
               padding: '10px 20px',
@@ -152,7 +156,7 @@ function Dashboard() {
               cursor: 'pointer'
             }}
           >
-            Ver Planes
+            {userProfile.estadoSuscripcion === 'SUSPENDIDA' ? 'Regularizar Plan' : 'Ver Planes'}
           </button>
         </div>
       )}

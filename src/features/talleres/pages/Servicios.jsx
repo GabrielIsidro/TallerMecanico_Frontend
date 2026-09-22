@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   Edit,
@@ -8,13 +9,19 @@ import {
   HelpCircle,
   Tag,
   Info,
-  CheckCircle
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react'
 import { getServicios, createServicio, updateServicio, deleteServicio, importServicios } from '../api/talleresApi';
 import { handleApiError } from '../../../utils/errorHandler';
+import { useAuth } from '../../../context/AuthContext';
 
 
 function Servicios() {
+  const { userProfile, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const esSoloLectura = !isSuperAdmin() && (userProfile?.estadoSuscripcion === 'VENCIDA' || userProfile?.estadoSuscripcion === 'SUSPENDIDA');
+
   const [servicios, setServicios] = useState([])
   const [modoEdicion, setModoEdicion] = useState(false)
   const [idEditar, setIdEditar] = useState(null)
@@ -39,6 +46,10 @@ function Servicios() {
   }
 
   const manejarGuardado = () => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para modificar el catálogo.", { duration: 4000 });
+      return;
+    }
     if (!nuevoServicio.descripcion || !nuevoServicio.precioSugerido) {
       toast.warning("Por favor completa la Descripción y el Precio Sugerido");
       return;
@@ -64,6 +75,10 @@ function Servicios() {
   }
 
   const manejarSubidaMasiva = () => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). No se permite carga masiva.", { duration: 4000 });
+      return;
+    }
     if (!archivoCSV) {
       toast.warning("Por favor, selecciona un archivo CSV primero.");
       return;
@@ -91,6 +106,10 @@ function Servicios() {
   }
 
   const iniciarEdicion = (servicio) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para editar precios.", { duration: 4000 });
+      return;
+    }
     setModoEdicion(true);
     setIdEditar(servicio.id);
     setNuevoServicio({
@@ -101,6 +120,10 @@ function Servicios() {
   }
 
   const eliminarServicio = (id) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). No podés eliminar servicios.", { duration: 4000 });
+      return;
+    }
     if (!confirm("¿Estás seguro de borrar este servicio del catálogo?")) return;
 
     deleteServicio(id)
@@ -133,6 +156,40 @@ function Servicios() {
         </h1>
       </div>
 
+      {/* BANNER SOLO LECTURA */}
+      {esSoloLectura && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fca5a5',
+          color: '#b91c1c',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangle size={20} />
+            <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. Podés consultar el catálogo de servicios pero no crear ni modificarlos.</span>
+          </div>
+          <button 
+            onClick={() => navigate('/suscripcion')}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              padding: '6px 14px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Regularizar Plan
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
         <div className="tb-card" style={{ background: modoEdicion ? '#fff7ed' : '#ffffff', border: modoEdicion ? '2px solid #fdba74' : '1px solid #e2e8f0', padding: '20px', margin: 0 }}>
@@ -147,7 +204,20 @@ function Servicios() {
             <div><label className="tb-label" style={{ color: '#166534' }}>Precio Sug. ($)</label><input type="number" value={nuevoServicio.precioSugerido} onChange={e => setNuevoServicio({ ...nuevoServicio, precioSugerido: e.target.value })} className="tb-input" style={{ border: '2px solid #bbf7d0' }} /></div>
 
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <button onClick={manejarGuardado} className="tb-btn-save" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: modoEdicion ? '#f97316' : '#2563eb' }}>
+              <button 
+                onClick={manejarGuardado} 
+                disabled={esSoloLectura}
+                className="tb-btn-save" 
+                style={{ 
+                  flex: 1, 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  backgroundColor: esSoloLectura ? '#94a3b8' : (modoEdicion ? '#f97316' : '#2563eb'),
+                  cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                }}
+              >
                 <CheckCircle size={18} /> {modoEdicion ? 'Guardar Cambios' : 'Agregar al Catálogo'}
               </button>
               {modoEdicion && <button onClick={terminarEdicion} className="tb-btn-cancel" style={{ flex: 1 }}>Cancelar</button>}
@@ -174,9 +244,17 @@ function Servicios() {
 
           <button
             onClick={manejarSubidaMasiva}
-            disabled={subiendoArchivo || !archivoCSV}
+            disabled={esSoloLectura || subiendoArchivo || !archivoCSV}
             className="tb-btn-save"
-            style={{ backgroundColor: archivoCSV ? '#10b981' : '#cbd5e1', width: '100%', cursor: archivoCSV ? 'pointer' : 'not-allowed', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+            style={{ 
+              backgroundColor: (esSoloLectura || !archivoCSV) ? '#cbd5e1' : '#10b981', 
+              width: '100%', 
+              cursor: (esSoloLectura || !archivoCSV) ? 'not-allowed' : 'pointer', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '8px' 
+            }}
           >
             <UploadCloud size={18} /> {subiendoArchivo ? 'Procesando...' : 'Subir y Actualizar'}
           </button>
@@ -212,8 +290,32 @@ function Servicios() {
                     <td className="tb-td" style={{ textAlign: 'right', fontWeight: 'bold', color: '#166534' }}>${s.precioSugerido ? s.precioSugerido.toLocaleString() : '0'}</td>
                     <td className="tb-td" style={{ textAlign: 'right' }}>
                       <div className="tb-actions" style={{ justifyContent: 'flex-end' }}>
-                        <button className="tb-btn-icon" style={{ background: '#f59e0b', color: 'white' }} onClick={() => iniciarEdicion(s)}><Edit size={16} /></button>
-                        <button className="tb-btn-icon tb-btn-delete" style={{ background: '#ef4444', color: 'white' }} onClick={() => eliminarServicio(s.id)}><Trash2 size={16} /></button>
+                        <button 
+                          className="tb-btn-icon" 
+                          style={{ 
+                            background: '#f59e0b', 
+                            color: 'white', 
+                            opacity: esSoloLectura ? 0.4 : 1, 
+                            cursor: esSoloLectura ? 'not-allowed' : 'pointer' 
+                          }} 
+                          onClick={() => iniciarEdicion(s)}
+                          title={esSoloLectura ? "Modo solo lectura" : "Editar"}
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          className="tb-btn-icon tb-btn-delete" 
+                          style={{ 
+                            background: '#ef4444', 
+                            color: 'white', 
+                            opacity: esSoloLectura ? 0.4 : 1, 
+                            cursor: esSoloLectura ? 'not-allowed' : 'pointer' 
+                          }} 
+                          onClick={() => eliminarServicio(s.id)}
+                          title={esSoloLectura ? "Modo solo lectura" : "Eliminar"}
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                     </td>
                   </tr>

@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
-import { loginAdmin, loginTaller, forgotPassword } from '../api/authApi';
+import { loginAdmin, loginTaller } from '../api/authApi';
 import { useAuth } from '../../../context/AuthContext';
-import logoTaller from '../../../assets/images/Logo_TuTaller.png';
+import logoTaller from '../../../assets/images/NuevoLogo.png';
 import './Login.css';
 
 
@@ -42,9 +42,13 @@ function Login() {
       const data = response.data;
 
       login(data.jwt || data.token); // Ajustar según como venga en el JSON
-      toast.success("¡Bienvenido a TuTaller!", { id: toastId });
+      toast.success("¡Bienvenido a PatitoFix!", { id: toastId });
 
-      navigate('/');
+      if (data.estadoSuscripcion === 'VENCIDA' || data.estadoSuscripcion === 'SUSPENDIDA') {
+        navigate('/suscripcion');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       const errorMsg = typeof err.response?.data === 'string'
         ? err.response.data
@@ -55,99 +59,81 @@ function Login() {
     }
   };
 
-  const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    if (!email) {
-      toast.warning("Por favor, ingresá tu correo electrónico en el campo superior primero.");
-      return;
-    }
-
-    if (!window.confirm(`¿Estás seguro que deseas restablecer la contraseña?\n\nSi continuas, tu contraseña actual se anulará y te llegará una nueva contraseña temporal al correo: ${email}`)) {
-      return;
-    }
-
-    const toastId = toast.loading("Procesando solicitud...");
-    try {
-      const response = await forgotPassword(email);
-      toast.success(response.data.mensaje || "Revisa tu correo para las instrucciones.", { id: toastId, duration: 6000 });
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Error al solicitar recuperación.", { id: toastId });
-    }
-  };
-
   return (
     <div className="login-container">
-    <div className="login-circle1"></div>
-    <div className="login-circle2"></div>
+      <div className="login-circle1"></div>
+      <div className="login-circle2"></div>
 
-    <div className="login-glassCard">
-      <div className="login-header">
-        <img
-          src={logoTaller}
-          alt="Logo TuTaller"
-          className="login-logoImage"
-        />
-        <h1 className="login-title">TuTaller</h1>
-        <p className="login-subtitle">Gestión integral para tu taller mecánico</p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="login-inputGroup">
-          <label className="login-label">Correo Electrónico</label>
-          <div className="login-inputWrapper">
-            <Mail size={19} color="#94a3b8" className="login-inputIcon" />
-            <input
-              type="email"
-              placeholder="juan.perez@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="login-input"
-              required
-            />
-          </div>
+      <div className="login-glassCard">
+        <div className="login-header">
+          <img
+            src={logoTaller}
+            alt="PatitoFix - Gestión Integral para Talleres Automotrices"
+            className="login-logoImage"
+          />
+          <h1 className="sr-only">PatitoFix</h1>
+          <p className="login-subtitle">Iniciá sesión para gestionar tu taller</p>
         </div>
 
-        <div className="login-inputGroup">
-          <div className="login-labelRow">
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-inputGroup">
+            <label className="login-label">Correo Electrónico</label>
+            <div className="login-inputWrapper">
+              <Mail size={19} color="#94a3b8" className="login-inputIcon" />
+              <input
+                type="email"
+                placeholder="juan.perez@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="login-input"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="login-inputGroup">
             <label className="login-label">Contraseña</label>
-            <a href="#" onClick={handleForgotPassword} className="login-forgotPassword">¿Olvidaste tu clave?</a>
+            <div className="login-inputWrapper">
+              <Lock size={19} color="#94a3b8" className="login-inputIcon" />
+              <input
+                type="password"
+                placeholder="••••••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="login-input"
+                required
+              />
+            </div>
+            <div className="login-forgot-row">
+              <Link to="/recuperar-password" className="login-forgot-link">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </div>
-          <div className="login-inputWrapper">
-            <Lock size={19} color="#94a3b8" className="login-inputIcon" />
-            <input
-              type="password"
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="login-input"
-              required
-            />
+
+          <button
+            type="submit"
+            disabled={cargando}
+            className={`login-submitButton ${cargando ? 'login-submitButtonDisabled' : ''}`}
+          >
+            {cargando ? (
+              <span className="login-loader"></span>
+            ) : (
+              <><LogIn size={21} /> Ingresar al Sistema</>
+            )}
+          </button>
+
+        </form>
+
+        <div className="login-footer">
+          <div className="login-footer-text">
+            Desarrollado por Gabriel Isidro Garcia © 2026
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={cargando}
-          className={`login-submitButton ${cargando ? 'login-submitButtonDisabled' : ''}`}
-        >
-          {cargando ? (
-            <span className="login-loader"></span>
-          ) : (
-            <><LogIn size={21} /> Ingresar al Sistema</>
-          )}
-        </button>
-
-      </form>
-
-      <div className="login-footer">
-        <div className="login-footer-text">
-          Desarrollado por Gabriel Isidro Garcia © 2026
-        </div>
       </div>
-
     </div>
-  </div>
-);
+  );
 }
 
 export default Login;

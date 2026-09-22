@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { 
   Plus, 
@@ -7,16 +8,21 @@ import {
   Trash2, 
   Info, 
   HelpCircle, 
-  CheckCircle,
-  FileText,
-  AlertTriangle,
-  Car
+  CheckCircle, 
+  FileText, 
+  AlertTriangle, 
+  Car 
 } from 'lucide-react'
 import { getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getClientes } from '../api/talleresApi';
 import { handleApiError } from '../../../utils/errorHandler';
+import { useAuth } from '../../../context/AuthContext';
 
 
 function Vehiculos() {
+  const { userProfile, isSuperAdmin } = useAuth();
+  const navigate = useNavigate();
+  const esSoloLectura = !isSuperAdmin() && (userProfile?.estadoSuscripcion === 'VENCIDA' || userProfile?.estadoSuscripcion === 'SUSPENDIDA');
+
   const [vehiculos, setVehiculos] = useState([])
   const [clientes, setClientes] = useState([])
   const [modoEdicion, setModoEdicion] = useState(false)
@@ -55,6 +61,10 @@ function Vehiculos() {
   }
 
   const manejarGuardado = () => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para registrar o actualizar vehículos.", { duration: 4000 });
+      return;
+    }
     if(!nuevoAuto.patente || !nuevoAuto.modelo) {
         toast.warning("Por favor completa Patente y Modelo");
         return;
@@ -82,6 +92,10 @@ function Vehiculos() {
   }
 
   const iniciarEdicion = (auto) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). Regularizá tu plan para editar vehículos.", { duration: 4000 });
+      return;
+    }
     setModoEdicion(true);
     setIdEditar(auto.id);
     setNuevoAuto({
@@ -97,6 +111,10 @@ function Vehiculos() {
   }
 
   const eliminarVehiculo = (id) => {
+    if (esSoloLectura) {
+      toast.warning("Tu suscripción ha vencido (Modo Solo Lectura). No podés eliminar vehículos.", { duration: 4000 });
+      return;
+    }
     if(!confirm("¿Estás seguro de que deseas borrar este vehículo?")) return;
     
     deleteVehiculo(id)
@@ -153,6 +171,40 @@ function Vehiculos() {
           Gestión de Vehículos
         </h1>
       </div>
+
+      {/* BANNER SOLO LECTURA */}
+      {esSoloLectura && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fca5a5',
+          color: '#b91c1c',
+          padding: '12px 18px',
+          borderRadius: '10px',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <AlertTriangle size={20} />
+            <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. Podés consultar los vehículos pero no registrar ni modificarlos.</span>
+          </div>
+          <button 
+            onClick={() => navigate('/suscripcion')}
+            style={{
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              padding: '6px 14px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Regularizar Plan
+          </button>
+        </div>
+      )}
       
       {/* FORMULARIO */}
       <div className="tb-card" style={{ background: modoEdicion ? '#fff7ed' : '#ffffff', border: modoEdicion ? '2px solid #fdba74' : '1px solid #e2e8f0', padding: '20px', marginBottom: '25px' }}>
@@ -185,7 +237,20 @@ function Vehiculos() {
           <div><label className="tb-label" style={{color: '#1d4ed8'}}>Próximo Service (KM)</label><input type="number" placeholder="Ej: 160000" value={nuevoAuto.proximoServiceKm} onChange={e => setNuevoAuto({...nuevoAuto, proximoServiceKm: e.target.value})} className="tb-input" style={{border: '2px solid #93c5fd', backgroundColor: '#eff6ff'}} /></div>
 
           <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
-              <button onClick={manejarGuardado} className="tb-btn-save" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: modoEdicion ? '#f97316' : '#10b981' }}>
+              <button 
+                onClick={manejarGuardado} 
+                disabled={esSoloLectura}
+                className="tb-btn-save" 
+                style={{ 
+                  flex: 1, 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  backgroundColor: esSoloLectura ? '#94a3b8' : (modoEdicion ? '#f97316' : '#10b981'),
+                  cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                }}
+              >
                 <CheckCircle size={18} color="white"/>
                 {modoEdicion ? 'Actualizar Vehículo' : 'Guardar Vehículo'}
               </button>
@@ -249,10 +314,30 @@ function Vehiculos() {
                         </td>
                         <td className="tb-td" style={{ textAlign: 'right' }}>
                             <div className="tb-actions" style={{ justifyContent: 'flex-end' }}>
-                              <button className="tb-btn-icon" style={{ background: '#f59e0b', color: 'white' }} onClick={() => iniciarEdicion(v)} title="Editar">
+                              <button 
+                                className="tb-btn-icon" 
+                                style={{ 
+                                  background: '#f59e0b', 
+                                  color: 'white', 
+                                  opacity: esSoloLectura ? 0.4 : 1, 
+                                  cursor: esSoloLectura ? 'not-allowed' : 'pointer' 
+                                }} 
+                                onClick={() => iniciarEdicion(v)} 
+                                title={esSoloLectura ? "Modo solo lectura" : "Editar"}
+                              >
                                   <Edit size={16} color="white"/>
                               </button>
-                              <button className="tb-btn-icon tb-btn-delete" style={{ background: '#ef4444', color: 'white' }} onClick={() => eliminarVehiculo(v.id)} title="Borrar">
+                              <button 
+                                className="tb-btn-icon tb-btn-delete" 
+                                style={{ 
+                                  background: '#ef4444', 
+                                  color: 'white', 
+                                  opacity: esSoloLectura ? 0.4 : 1, 
+                                  cursor: esSoloLectura ? 'not-allowed' : 'pointer' 
+                                }} 
+                                onClick={() => eliminarVehiculo(v.id)} 
+                                title={esSoloLectura ? "Modo solo lectura" : "Borrar"}
+                              >
                                   <Trash2 size={16} color="white"/>
                               </button>
                             </div>
