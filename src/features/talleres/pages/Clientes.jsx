@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { User, Building2, Phone, Mail, MapPin, IdCard, Trash2, Edit, PlusCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
-
+import { getClientes, createCliente, updateCliente, deleteCliente } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
   
-  // Estados de paginaci�n
+  // Estados de paginación
   const [paginaActual, setPaginaActual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(0);
   const [totalElementos, setTotalElementos] = useState(0);
@@ -30,7 +30,7 @@ function Clientes() {
     cargarClientes(paginaActual, size, busquedaAplicada);
   }, [paginaActual, busquedaAplicada]);
 
-  // Si cambia la b�squeda aplicada, reiniciamos a la p�gina 0
+  // Si cambia la búsqueda aplicada, reiniciamos a la página 0
   const aplicarBusqueda = () => {
     setPaginaActual(0);
     setBusquedaAplicada(terminoBusqueda);
@@ -50,7 +50,7 @@ function Clientes() {
       setTotalPaginas(response.data.totalPages || 0);
       setTotalElementos(response.data.totalElements || 0);
     } catch (error) {
-      toast.error("Error al cargar los clientes");
+      handleApiError(error, "Error al cargar los clientes");
     } finally {
       setCargando(false);
     }
@@ -59,7 +59,7 @@ function Clientes() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nombreCliente.trim()) {
-      toast.warning("El Nombre o Raz�n Social es obligatorio.");
+      toast.warning("El Nombre o Razón Social es obligatorio.");
       return;
     }
 
@@ -71,23 +71,23 @@ function Clientes() {
         await createCliente(clienteData);
       }
       
-      toast.success(`Cliente ${idEditando ? 'actualizado' : 'guardado'} con �xito`);
+      toast.success(`Cliente ${idEditando ? 'actualizado' : 'guardado'} con éxito`);
       cargarClientes(paginaActual, size, busquedaAplicada);
       limpiarFormulario();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Error de conexi�n");
+      handleApiError(error, "Error al guardar el cliente");
     }
   };
 
   const eliminarCliente = async (id) => {
-    if (!window.confirm("�Est�s seguro de eliminar este cliente?")) return;
+    if (!window.confirm("¿Estás seguro de eliminar este cliente?")) return;
     
     try {
       await deleteCliente(id);
       toast.success("Cliente eliminado");
       cargarClientes(paginaActual, size, busquedaAplicada);
     } catch (error) {
-      toast.error("No se pudo eliminar el cliente (Puede tener �rdenes asociadas)");
+      handleApiError(error, "No se pudo eliminar el cliente (puede tener órdenes asociadas)");
     }
   };
 
@@ -120,7 +120,7 @@ function Clientes() {
           <div style={{ background: '#dbeafe', padding: '10px', borderRadius: '10px', display: 'flex' }}>
             <User size={26} color="#3b82f6" />
           </div>
-          Gesti�n de Clientes
+          Gestión de Clientes
         </h1>
       </div>
 
@@ -148,13 +148,13 @@ function Clientes() {
               <input type="checkbox" checked={esEmpresa} readOnly style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '0.95em' }}>Es una Empresa</span>
-                <span style={{ fontSize: '0.8em', color: '#64748b' }}>Habilitar CUIT y Raz�n Social</span>
+                <span style={{ fontSize: '0.8em', color: '#64748b' }}>Habilitar CUIT y Razón Social</span>
               </div>
             </div>
 
             <div style={{ position: 'relative' }}>
               <label className="tb-label">
-                {esEmpresa ? 'Raz�n Social' : 'Nombre y Apellido'}
+                {esEmpresa ? 'Razón Social' : 'Nombre y Apellido'}
               </label>
               {esEmpresa ? <Building2 size={16} className="tb-filter-icon" /> : <User size={16} className="tb-filter-icon" />}
               <input 
@@ -164,7 +164,7 @@ function Clientes() {
                 className="tb-input" 
                 style={{ paddingLeft: '35px' }}
                 required 
-                placeholder={esEmpresa ? "Ej: Log�stica Los Hermanos S.R.L." : "Ej: Juan P�rez"} 
+                placeholder={esEmpresa ? "Ej: Logística Los Hermanos S.R.L." : "Ej: Juan Pérez"} 
               />
             </div>
           </div>
@@ -184,7 +184,7 @@ function Clientes() {
             </div>
             
             <div style={{ position: 'relative' }}>
-              <label className="tb-label">Tel�fono</label>
+              <label className="tb-label">Teléfono</label>
               <Phone size={16} className="tb-filter-icon" />
               <input 
                 type="text" 
@@ -211,7 +211,7 @@ function Clientes() {
           </div>
 
           <div style={{ position: 'relative' }}>
-            <label className="tb-label">Direcci�n</label>
+            <label className="tb-label">Dirección</label>
             <MapPin size={16} className="tb-filter-icon" />
             <input 
               type="text" 
@@ -270,7 +270,7 @@ function Clientes() {
         {cargando ? (
           <p className="tb-loading">Cargando clientes...</p>
         ) : clientes.length === 0 ? (
-          <p className="tb-loading" style={{ background: '#f8fafc', borderRadius: '8px' }}>No hay clientes registrados o que coincidan con la b�squeda.</p>
+          <p className="tb-loading" style={{ background: '#f8fafc', borderRadius: '8px' }}>No hay clientes registrados o que coincidan con la búsqueda.</p>
         ) : (
           <div className="tb-table-wrapper">
             <table className="tb-table">
@@ -315,7 +315,7 @@ function Clientes() {
               </tbody>
             </table>
 
-            {/* Paginaci�n */}
+            {/* Paginación */}
             {totalPaginas > 1 && (
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
                 <button 
@@ -326,7 +326,7 @@ function Clientes() {
                   <ChevronLeft size={18} />
                 </button>
                 <span style={{ fontWeight: 'bold', color: '#475569' }}>
-                  P�gina {paginaActual + 1} de {totalPaginas}
+                  Página {paginaActual + 1} de {totalPaginas}
                 </span>
                 <button 
                   onClick={() => setPaginaActual(prev => Math.min(totalPaginas - 1, prev + 1))}

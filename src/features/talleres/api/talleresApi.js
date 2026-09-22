@@ -56,6 +56,11 @@ export const getOrdenes = async (page = 0, size = 10) => {
     return await api.get(`/talleres/ordenes?page=${page}&size=${size}`);
 };
 
+export const getOrdenById = async (id) => {
+    const response = await api.get(`/talleres/ordenes/${id}`);
+    return response.data;
+};
+
 export const createOrden = async (data) => {
     return await api.post('/talleres/ordenes', data);
 };

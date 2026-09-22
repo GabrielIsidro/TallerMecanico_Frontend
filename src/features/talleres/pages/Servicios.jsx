@@ -10,7 +10,8 @@ import {
   Info,
   CheckCircle
 } from 'lucide-react'
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { getServicios, createServicio, updateServicio, deleteServicio, importServicios } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 
 function Servicios() {
@@ -48,8 +49,7 @@ function Servicios() {
       precioSugerido: parseFloat(nuevoServicio.precioSugerido) || 0
     };
 
-    const url = modoEdicion ? `/servicios/${idEditar}` : '/servicios';
-    const request = modoEdicion ? updateServicio(modoEdicion ? idEditando : null, servicioAEnviar) : createServicio(servicioAEnviar);
+    const request = modoEdicion ? updateServicio(idEditar, servicioAEnviar) : createServicio(servicioAEnviar);
     const toastId = toast.loading(modoEdicion ? "Actualizando precio..." : "Guardando servicio...");
 
     request
@@ -59,7 +59,7 @@ function Servicios() {
         cargarServicios();
       })
       .catch(err => {
-        toast.error("Fallo al guardar. Revisa la conexión.", { id: toastId });
+        handleApiError(err, "Fallo al guardar. Revisa la conexión.", toastId);
       });
   }
 
@@ -83,7 +83,7 @@ function Servicios() {
         cargarServicios();
       })
       .catch(err => {
-        toast.error("Error en la carga masiva. Revisa el formato del archivo.", { id: toastId });
+        handleApiError(err, "Error en la carga masiva. Revisa el formato del archivo.", toastId);
       })
       .finally(() => {
         setSubiendoArchivo(false);
@@ -107,6 +107,9 @@ function Servicios() {
       .then(() => {
         toast.success("Servicio eliminado.");
         cargarServicios();
+      })
+      .catch(err => {
+        handleApiError(err, "Error al eliminar el servicio.");
       })
   }
 

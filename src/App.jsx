@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import './assets/styles/global.css';
 import Login from './features/auth/components/Login';
-import PrivateRoute from './components/PrivateRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './layouts/DashboardLayout';
 
 function App() {
@@ -16,9 +16,9 @@ function App() {
         <Route 
           path="/*" 
           element={
-            <PrivateRoute>
+            <ProtectedRoute>
               <DashboardLayout />
-            </PrivateRoute>
+            </ProtectedRoute>
           } 
         />
       </Routes>

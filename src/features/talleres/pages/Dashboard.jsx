@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getOrdenes, getVehiculos, getClientes } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { toast } from 'sonner';
 import { useAuth } from '../../../context/AuthContext';
@@ -103,14 +104,11 @@ function Dashboard() {
         alertasService: alertas
       });
 
-      setCargando(false);
-      
       toast.success("Panel actualizado", { id: toastId, duration: 2000 });
-
     } catch (error) {
-      console.error("Error cargando el Dashboard:", error);
+      handleApiError(error, "Fallo al cargar el panel operativo", toastId);
+    } finally {
       setCargando(false);
-      toast.error("Fallo la conexión con el servidor", { id: toastId });
     }
   };
 

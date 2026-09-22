@@ -12,9 +12,11 @@ import {
   Edit2,
   Save,
   ArrowLeft,
-  Car
+  Car,
+  FileText
 } from 'lucide-react'
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { getOrdenById, updateOrden, updateEstadoOrden, getServicios, getOrdenPdf } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 
 function ProcesarOrden() {
@@ -25,6 +27,8 @@ function ProcesarOrden() {
   const [servicios, setServicios] = useState([]) 
   const [carrito, setCarrito] = useState([]) 
   const [gruposExpandidos, setGruposExpandidos] = useState({})
+  const [cargando, setCargando] = useState(true)
+  const [errorCarga, setErrorCarga] = useState(null)
   
   // Nuevos estados
   const [observacionesCliente, setObservacionesCliente] = useState('');
@@ -60,23 +64,26 @@ function ProcesarOrden() {
   });
 
   useEffect(() => {
+    setCargando(true);
+    setErrorCarga(null);
     Promise.all([
-      getOrdenes(), 
+      getOrdenById(id), 
       getServicios()
     ])
-    .then(([resOrdenes, resServicios]) => {
-      const todasLasOrdenes = resOrdenes.data.content || [];
-      const ordenEncontrada = todasLasOrdenes.find(o => o.id === parseInt(id));
-      
+    .then(([ordenEncontrada, resServicios]) => {
       setServicios(resServicios.data);
-
       if (ordenEncontrada) {
-          cargarDatosOrden(ordenEncontrada);
+        cargarDatosOrden(ordenEncontrada);
       } else {
-          toast.error("No se encontró la orden en el historial actual.");
+        setErrorCarga("No se encontró la orden en el taller.");
       }
     })
-    .catch(err => console.error("Error cargando datos:", err));
+    .catch(err => {
+      console.error("Error cargando datos de orden:", err);
+      setErrorCarga("No se pudo cargar la orden. Es posible que no exista o pertenezca a otro taller.");
+      handleApiError(err, "Error al cargar los datos de la orden.");
+    })
+    .finally(() => setCargando(false));
   }, [id])
 
   const cargarDatosOrden = (ordenDb) => {
@@ -139,6 +146,7 @@ function ProcesarOrden() {
     if (!descripcionAutomatica) descripcionAutomatica = orden.descripcion;
 
     const ordenActualizada = {
+      vehiculoId: orden?.vehiculo?.id,
       descripcion: descripcionAutomatica,
       observacionesMecanico: observacionesMecanico,
       observacionesCliente: observacionesCliente,
@@ -166,7 +174,30 @@ function ProcesarOrden() {
             setOrden(res.data);
         }
     }) 
-    .catch(err => toast.error("Error al guardar. Revisa la conexión con el servidor.", { id: toastId }))
+    .catch(err => {
+        handleApiError(err, "Error al guardar. Revisa la conexión con el servidor.", toastId);
+    })
+  }
+
+  const descargarPDF = () => {
+    if (!orden?.id) return;
+    const toastId = toast.loading("Generando PDF...");
+    getOrdenPdf(orden.id)
+      .then(response => {
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `Orden_Trabajo_${orden.id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        toast.success("PDF descargado correctamente", { id: toastId });
+      })
+      .catch(err => {
+        console.error("Error al descargar PDF:", err);
+        toast.error("Error al generar el PDF", { id: toastId });
+      });
   }
 
   const serviciosAgrupados = servicios.reduce((acumulador, servicio) => {
@@ -210,7 +241,27 @@ function ProcesarOrden() {
       )
   }
 
-  if (!orden) return <div className="tb-loading">Cargando orden...</div>;
+  if (cargando) return <div className="tb-loading" style={{ padding: '50px', textAlign: 'center' }}>Cargando orden de trabajo... ⏳</div>;
+
+  if (errorCarga || !orden) {
+    return (
+      <div className="tb-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
+        <div className="tb-card" style={{ maxWidth: '500px', margin: '0 auto', padding: '35px' }}>
+          <h2 style={{ color: '#ef4444', marginBottom: '10px' }}>Orden no encontrada</h2>
+          <p style={{ color: '#64748b', marginBottom: '25px' }}>
+            {errorCarga || "La orden solicitada no existe o no tienes permisos para visualizarla."}
+          </p>
+          <button 
+            onClick={() => navigate('/historial')} 
+            className="tb-btn-save" 
+            style={{ margin: '0 auto', background: '#3b82f6', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+          >
+            <ArrowLeft size={18} /> Volver a Órdenes
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="tb-container">
@@ -389,6 +440,9 @@ function ProcesarOrden() {
                   </button>
                   <button className="tb-btn-save" onClick={() => guardarCambios(true)} style={{width: '100%', background: '#10b981', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
                     <CheckCircle size={18} style={{marginRight: '8px'}}/> FINALIZAR ORDEN
+                  </button>
+                  <button type="button" className="tb-btn-save" onClick={descargarPDF} style={{width: '100%', background: '#64748b', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                    <FileText size={18} style={{marginRight: '8px'}}/> DESCARGAR COMPROBANTE (PDF)
                   </button>
               </div>
             </div>

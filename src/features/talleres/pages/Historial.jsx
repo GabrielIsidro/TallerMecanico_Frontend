@@ -13,7 +13,8 @@ import {
   ChevronRight,
   ClipboardList
 } from 'lucide-react'
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { getOrdenes, updateEstadoOrden, updatePagoOrden, getOrdenPdf } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 
 function Historial() {
@@ -43,7 +44,7 @@ function Historial() {
       })
       .catch(err => {
         setCargando(false)
-        toast.error("Error al cargar el historial desde el servidor.");
+        handleApiError(err, "Error al cargar el historial desde el servidor.");
       })
   }
 
@@ -56,7 +57,7 @@ function Historial() {
         cargarOrdenes(paginaActual, size); 
     })
     .catch((err) => {
-        toast.error("Fallo al cambiar estado.", { id: toastId });
+        handleApiError(err, "Fallo al cambiar estado.", toastId);
     });
   }
 
@@ -69,7 +70,7 @@ function Historial() {
         cargarOrdenes(paginaActual, size); 
     })
     .catch((err) => {
-        toast.error("Fallo al registrar pago.", { id: toastId });
+        handleApiError(err, "Fallo al registrar pago.", toastId);
     });
   }
 
@@ -107,14 +108,20 @@ function Historial() {
     return idString.includes(termino) || patente.includes(termino) || nombreCliente.includes(termino)
   })
 
-  // Agrupamos en las 3 columnas
-  const activas = ordenesFiltradas.filter(o => o.estado === 'PENDIENTE' || o.estado === 'EN_REPARACION');
+  // Agrupamos en las 3 columnas incluyendo todos los estados oficiales
+  const activas = ordenesFiltradas.filter(o => 
+    o.estado === 'PENDIENTE' || 
+    o.estado === 'PRESUPUESTADO' || 
+    o.estado === 'APROBADO' || 
+    o.estado === 'EN_REPARACION' ||
+    (!['FINALIZADO', 'ENTREGADO'].includes(o.estado))
+  );
   const finalizadas = ordenesFiltradas.filter(o => o.estado === 'FINALIZADO');
   const entregadas = ordenesFiltradas.filter(o => o.estado === 'ENTREGADO');
 
   const renderCard = (o) => {
-    const colorBorde = o.estado === 'PENDIENTE' ? '#f59e0b' : 
-                       o.estado === 'EN_REPARACION' ? '#3b82f6' : 
+    const colorBorde = (o.estado === 'PENDIENTE' || o.estado === 'PRESUPUESTADO') ? '#f59e0b' : 
+                       (o.estado === 'APROBADO' || o.estado === 'EN_REPARACION') ? '#3b82f6' : 
                        o.estado === 'FINALIZADO' ? '#8b5cf6' : '#10b981';
 
     return (
@@ -144,6 +151,8 @@ function Historial() {
                         style={{ padding: '4px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '0.8em', cursor: 'pointer', outline: 'none', backgroundColor: '#f8fafc', color: colorBorde, border: `1px solid ${colorBorde}` }}
                     >
                         <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="PRESUPUESTADO">PRESUPUESTADO</option>
+                        <option value="APROBADO">APROBADO</option>
                         <option value="EN_REPARACION">EN REPARACIÓN</option>
                         <option value="FINALIZADO">FINALIZADO</option>
                         <option value="ENTREGADO">ENTREGADO</option>

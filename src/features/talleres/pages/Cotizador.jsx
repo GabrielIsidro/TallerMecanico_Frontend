@@ -13,7 +13,8 @@ import {
   MessageSquare,
   Edit2
 } from 'lucide-react'
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { getServicios, getVehiculos, createOrden } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 
 function Cotizador() {
@@ -35,7 +36,10 @@ function Cotizador() {
       setServicios(resServicios.data);
       setVehiculos(resVehiculos.data); 
     })
-    .catch(err => console.error("Error cargando datos:", err));
+    .catch(err => {
+      console.error("Error cargando datos:", err);
+      handleApiError(err, "Error cargando servicios y vehículos");
+    });
   }, [])
 
   const agregarAlCarrito = (servicio) => {
@@ -103,7 +107,10 @@ function Cotizador() {
         setKilometraje('');
         toast.success("¡Ingreso creado exitosamente!", { id: toastId });
     }) 
-    .catch(err => toast.error("Error al crear. Revisa la conexión con el servidor.", { id: toastId }))
+    .catch(err => {
+        console.error("Error al crear orden:", err);
+        handleApiError(err, "Error al crear la orden de trabajo", toastId);
+    })
   }
 
   const serviciosAgrupados = servicios.reduce((acumulador, servicio) => {

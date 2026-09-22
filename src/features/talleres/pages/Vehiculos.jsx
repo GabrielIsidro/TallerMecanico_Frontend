@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   Car
 } from 'lucide-react'
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
+import { getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getClientes } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 
 function Vehiculos() {
@@ -65,8 +66,7 @@ function Vehiculos() {
         anio: parseInt(nuevoAuto.anio) || 2024
     };
 
-    const url = modoEdicion ? `/vehiculos/${idEditar}` : '/vehiculos';
-    const request = modoEdicion ? updateVehiculo(modoEdicion ? idEditando : null, autoAEnviar) : createVehiculo(autoAEnviar);
+    const request = modoEdicion ? updateVehiculo(idEditar, autoAEnviar) : createVehiculo(autoAEnviar);
 
     const toastId = toast.loading(modoEdicion ? "Actualizando vehículo..." : "Registrando vehículo...");
 
@@ -77,7 +77,7 @@ function Vehiculos() {
         cargarVehiculos();
     })
     .catch(err => {
-        toast.error("Hubo un error al guardar el vehículo.", { id: toastId });
+        handleApiError(err, "Hubo un error al guardar el vehículo.", toastId);
     });
   }
 
@@ -105,7 +105,7 @@ function Vehiculos() {
         cargarVehiculos();
     })
     .catch(err => {
-        toast.error("No se puede borrar. Revisa que no tenga historial asociado.");
+        handleApiError(err, "No se puede borrar. Revisa que no tenga historial asociado.");
     })
   }
 

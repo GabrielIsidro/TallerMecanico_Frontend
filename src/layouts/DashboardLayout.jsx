@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
+import ProtectedRoute from '../components/ProtectedRoute';
 
 import { simulateWebhook } from '../features/backoffice/api/backofficeApi';
 
@@ -180,9 +181,30 @@ function DashboardLayout() {
               <Route path="/historial" element={<Historial />} />
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/servicios" element={<Servicios />} />
-              <Route path="/inventario" element={isMecanico() ? <Navigate to="/" /> : <Inventario />} />
-              <Route path="/equipo" element={isMecanico() ? <Navigate to="/" /> : <Equipo />} />
-              <Route path="/suscripcion" element={isMecanico() ? <Navigate to="/" /> : <Suscripcion />} />
+              <Route 
+                path="/inventario" 
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN_TALLER']}>
+                    <Inventario />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/equipo" 
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN_TALLER']}>
+                    <Equipo />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/suscripcion" 
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN_TALLER']}>
+                    <Suscripcion />
+                  </ProtectedRoute>
+                } 
+              />
             </>
           )}
 

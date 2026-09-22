@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { PackageSearch, Plus, PackageOpen, AlertTriangle, CheckCircle, Edit3, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getClientes, createCliente, updateCliente, deleteCliente, getVehiculos, createVehiculo, updateVehiculo, deleteVehiculo, getServicios, createServicio, updateServicio, deleteServicio, importServicios, getOrdenes, createOrden, updateOrden, updateEstadoOrden, updatePagoOrden, getOrdenPdf, getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto, getEquipo, createMiembroEquipo, deleteMiembroEquipo, getMiPerfil, updateMiPerfil } from '../api/talleresApi';
-
+import { getRepuestos, createRepuesto, updateRepuesto, deleteRepuesto } from '../api/talleresApi';
+import { handleApiError } from '../../../utils/errorHandler';
 
 const Inventario = () => {
   const [repuestos, setRepuestos] = useState([]);
@@ -28,8 +28,7 @@ const Inventario = () => {
       const res = await getRepuestos();
       setRepuestos(res.data);
     } catch (error) {
-      console.error(error);
-      toast.error('Error al cargar inventario');
+      handleApiError(error, 'Error al cargar inventario');
     } finally {
       setCargando(false);
     }
@@ -48,7 +47,7 @@ const Inventario = () => {
   const guardarRepuesto = async (e) => {
     e.preventDefault();
     if (!nombre || cantidad < 0 || precio < 0) {
-      toast.warning('Complet� los campos correctamente');
+      toast.warning('Completá los campos correctamente');
       return;
     }
 
@@ -58,16 +57,15 @@ const Inventario = () => {
     try {
       if (editandoId) {
         await updateRepuesto(editandoId, data);
-        toast.success('Repuesto actualizado', { id: toastId });
+        toast.success('Repuesto actualizado con éxito', { id: toastId });
       } else {
         await createRepuesto(data);
-        toast.success('Repuesto agregado', { id: toastId });
+        toast.success('Repuesto agregado con éxito', { id: toastId });
       }
       limpiarForm();
       cargarRepuestos();
     } catch (error) {
-      console.error(error);
-      toast.error('Error al guardar', { id: toastId });
+      handleApiError(error, 'Error al guardar repuesto', toastId);
     }
   };
 
@@ -83,15 +81,14 @@ const Inventario = () => {
   };
 
   const eliminarRepuesto = async (id) => {
-    if (!window.confirm('�Seguro que quer�s eliminar este repuesto?')) return;
+    if (!window.confirm('¿Seguro que querés eliminar este repuesto?')) return;
     const toastId = toast.loading('Eliminando...');
     try {
       await deleteRepuesto(id);
       toast.success('Eliminado correctamente', { id: toastId });
       cargarRepuestos();
     } catch (error) {
-      console.error(error);
-      toast.error('Error al eliminar', { id: toastId });
+      handleApiError(error, 'Error al eliminar repuesto', toastId);
     }
   };
 
@@ -109,7 +106,7 @@ const Inventario = () => {
           <h1 className="tb-title" style={{ fontSize: '2.5rem' }}>
             <PackageSearch size={40} color="#3b82f6" /> Inventario
           </h1>
-          <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Gestion� tus repuestos y recib� alertas de stock.</p>
+          <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Gestioná tus repuestos y recibí alertas de stock.</p>
         </div>
         <button 
           onClick={() => { limpiarForm(); setMostrarForm(!mostrarForm); }}
@@ -123,7 +120,7 @@ const Inventario = () => {
       {/* KPIS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
         <div style={{ background: 'white', padding: '25px', borderRadius: '20px', borderLeft: '5px solid #3b82f6', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: 0, color: '#64748b', fontSize: '1rem', textTransform: 'uppercase' }}>Art�culos Totales</h3>
+          <h3 style={{ margin: 0, color: '#64748b', fontSize: '1rem', textTransform: 'uppercase' }}>Artículos Totales</h3>
           <p style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b' }}>{repuestos.length}</p>
         </div>
         <div style={{ background: 'white', padding: '25px', borderRadius: '20px', borderLeft: '5px solid #10b981', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
@@ -144,7 +141,7 @@ const Inventario = () => {
           <h2 style={{ margin: '0 0 20px 0', color: '#1e293b' }}>{editandoId ? 'Editar Repuesto' : 'Agregar Nuevo Repuesto'}</h2>
           <form onSubmit={guardarRepuesto} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', alignItems: 'end' }}>
             <div>
-              <label className="tb-label">Nombre / Descripci�n *</label>
+              <label className="tb-label">Nombre / Descripción *</label>
               <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="tb-input" placeholder="Filtro de Aceite" required />
             </div>
             <div>
@@ -156,7 +153,7 @@ const Inventario = () => {
               <input type="number" value={cantidad} onChange={e => setCantidad(Number(e.target.value))} className="tb-input" min="0" required />
             </div>
             <div>
-              <label className="tb-label">Stock M�nimo *</label>
+              <label className="tb-label">Stock Mínimo *</label>
               <input type="number" value={stockMinimo} onChange={e => setStockMinimo(Number(e.target.value))} className="tb-input" min="1" required />
             </div>
             <div>
@@ -175,8 +172,8 @@ const Inventario = () => {
         {repuestos.length === 0 ? (
           <div style={{ padding: '50px', textAlign: 'center', color: '#64748b' }}>
             <PackageOpen size={60} color="#cbd5e1" style={{ marginBottom: '15px' }} />
-            <h3 style={{ margin: 0 }}>El inventario est� vac�o</h3>
-            <p>Agreg� tu primer repuesto para empezar a controlar tu stock.</p>
+            <h3 style={{ margin: 0 }}>El inventario está vacío</h3>
+            <p>Agregá tu primer repuesto para empezar a controlar tu stock.</p>
           </div>
         ) : (
           <div className="tb-table-wrapper">
@@ -221,7 +218,7 @@ const Inventario = () => {
                           </span>
                         ) : (
                           <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-                            <CheckCircle size={16} /> �ptimo
+                            <CheckCircle size={16} /> Óptimo
                           </span>
                         )}
                       </td>
