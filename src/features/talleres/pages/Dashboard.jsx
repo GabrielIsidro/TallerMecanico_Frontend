@@ -43,15 +43,7 @@ function Dashboard() {
     const toastId = toast.loading("Sincronizando panel operativo...", {
         icon: <Loader2 className="animate-spin" size={20} />
     });
-
-    const token = localStorage.getItem('token');
-
-    const authHeaders = {
-        'Authorization': `Bearer ${token}`
-    };
-
     try {
-      const config = { headers: authHeaders };
       const [resOrdenes, resVehiculos, resClientes] = await Promise.all([
         getOrdenes(0, 1000),
         getVehiculos(),
@@ -122,17 +114,19 @@ function Dashboard() {
         <div style={{
           background: userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#fff7ed' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#fef2f2' : '#eff6ff'),
           border: `1px solid ${userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#fdba74' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#fca5a5' : '#bfdbfe')}`,
-          padding: '15px 20px',
+          padding: '16px 20px',
           borderRadius: '12px',
-          marginBottom: '20px',
+          marginBottom: '25px',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          gap: '15px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#c2410c' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#b91c1c' : '#1e40af') }}>
-            <AlertTriangle size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: userProfile.estadoSuscripcion === 'SUSPENDIDA' ? '#c2410c' : (userProfile.estadoSuscripcion === 'VENCIDA' ? '#b91c1c' : '#1e40af'), flex: '1 1 280px' }}>
+            <AlertTriangle size={24} style={{ flexShrink: 0 }} />
             <div>
-              <strong style={{ display: 'block', fontSize: '1.1em' }}>
+              <strong style={{ display: 'block', fontSize: '1.05em' }}>
                 {userProfile.estadoSuscripcion === 'SUSPENDIDA'
                   ? '¡Tu suscripción se encuentra suspendida!'
                   : (userProfile.estadoSuscripcion === 'VENCIDA' ? '¡Tu suscripción ha vencido!' : 'Estás en tu período de prueba gratuita')}
@@ -153,7 +147,9 @@ function Dashboard() {
               padding: '10px 20px',
               borderRadius: '8px',
               fontWeight: 'bold',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              minHeight: '44px',
+              flexShrink: 0
             }}
           >
             {userProfile.estadoSuscripcion === 'SUSPENDIDA' ? 'Regularizar Plan' : 'Ver Planes'}
@@ -162,12 +158,12 @@ function Dashboard() {
       )}
 
       {/* CABECERA */}
-      <div style={{ marginBottom: '30px' }}>
+      <div style={{ marginBottom: '25px' }}>
         <header style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <Hand size={40} color="#fbbf24" className="rotate-[-20deg]" />
+          <Hand size={36} color="#fbbf24" className="rotate-[-20deg]" style={{ flexShrink: 0 }} />
           <div>
-            <h1 style={{ margin: 0, color: '#1e293b', fontSize: '2.5em' }}>¡Hola, {userProfile?.nombre || 'Administrador'}!</h1>
-            <p style={{ color: '#64748b', margin: '5px 0 0 0', fontSize: '1.2em' }}>Este es el resumen operativo de hoy.</p>
+            <h1 style={{ margin: 0, color: '#1e293b', fontSize: 'clamp(1.4rem, 4vw, 2.2rem)', fontWeight: 800 }}>¡Hola, {userProfile?.nombre || 'Administrador'}!</h1>
+            <p style={{ color: '#64748b', margin: '4px 0 0 0', fontSize: 'clamp(0.9rem, 2.5vw, 1.15rem)' }}>Este es el resumen operativo de hoy.</p>
           </div>
         </header>
       </div>

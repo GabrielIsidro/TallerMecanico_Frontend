@@ -131,7 +131,7 @@ function Clientes() {
   };
 
   return (
-    <div className="tb-container" style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="tb-container" style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       
       <div className="tb-header">
         <h1 className="tb-title" style={{ fontSize: '1.8em' }}>
@@ -177,7 +177,7 @@ function Clientes() {
       )}
 
       {/* FORMULARIO */}
-      <div className="tb-card" style={{ padding: '25px', marginBottom: '30px' }}>
+      <div className="tb-card" style={{ width: '100%', boxSizing: 'border-box', marginBottom: '25px' }}>
         <h3 className="tb-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', fontSize: '1.2em' }}>
           {idEditando ? <Edit size={18} /> : <PlusCircle size={18} />}
           {idEditando ? 'Editar Cliente' : 'Nuevo Cliente'}
@@ -185,7 +185,7 @@ function Clientes() {
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '15px', alignItems: 'center' }}>
+          <div className="responsive-grid-half" style={{ gap: '15px', alignItems: 'center' }}>
             
             <div 
               onClick={() => setEsEmpresa(!esEmpresa)}
@@ -194,7 +194,8 @@ function Clientes() {
                 padding: '15px', borderRadius: '8px', 
                 border: `1px solid ${esEmpresa ? '#bfdbfe' : '#e2e8f0'}`, 
                 display: 'flex', alignItems: 'center', gap: '10px', 
-                cursor: 'pointer', transition: 'all 0.2s' 
+                cursor: 'pointer', transition: 'all 0.2s',
+                minHeight: '44px'
               }}
             >
               <input type="checkbox" checked={esEmpresa} readOnly style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
@@ -204,7 +205,7 @@ function Clientes() {
               </div>
             </div>
 
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
               <label className="tb-label">
                 {esEmpresa ? 'Razón Social' : 'Nombre y Apellido'}
               </label>
@@ -214,15 +215,15 @@ function Clientes() {
                 value={nombreCliente} 
                 onChange={(e) => setNombreCliente(e.target.value)} 
                 className="tb-input" 
-                style={{ paddingLeft: '35px' }}
+                style={{ paddingLeft: '35px', width: '100%', boxSizing: 'border-box' }}
                 required 
                 placeholder={esEmpresa ? "Ej: Logística Los Hermanos S.R.L." : "Ej: Juan Pérez"} 
               />
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-            <div style={{ position: 'relative' }}>
+          <div className="responsive-grid-3" style={{ gap: '15px' }}>
+            <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
               <label className="tb-label">{esEmpresa ? 'CUIT' : 'DNI'}</label>
               <IdCard size={16} className="tb-filter-icon" />
               <input 
@@ -230,12 +231,12 @@ function Clientes() {
                 value={documentoCuit} 
                 onChange={(e) => setDocumentoCuit(e.target.value)} 
                 className="tb-input" 
-                style={{ paddingLeft: '35px' }}
+                style={{ paddingLeft: '35px', width: '100%', boxSizing: 'border-box' }}
                 placeholder={esEmpresa ? "30-12345678-9" : "12.345.678"} 
               />
             </div>
             
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
               <label className="tb-label">Teléfono</label>
               <Phone size={16} className="tb-filter-icon" />
               <input 
@@ -243,26 +244,26 @@ function Clientes() {
                 value={telefono} 
                 onChange={(e) => setTelefono(e.target.value)} 
                 className="tb-input" 
-                style={{ paddingLeft: '35px' }}
+                style={{ paddingLeft: '35px', width: '100%', boxSizing: 'border-box' }}
                 placeholder="11 1234-5678" 
               />
             </div>
 
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
               <label className="tb-label">Email</label>
               <Mail size={16} className="tb-filter-icon" />
               <input 
                 type="email" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
-                className="tb-input"
-                style={{ paddingLeft: '35px' }} 
+                className="tb-input" 
+                style={{ paddingLeft: '35px', width: '100%', boxSizing: 'border-box' }} 
                 placeholder="correo@ejemplo.com" 
               />
             </div>
           </div>
 
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', width: '100%', minWidth: 0 }}>
             <label className="tb-label">Dirección</label>
             <MapPin size={16} className="tb-filter-icon" />
             <input 
@@ -270,7 +271,7 @@ function Clientes() {
               value={direccion} 
               onChange={(e) => setDireccion(e.target.value)} 
               className="tb-input" 
-              style={{ paddingLeft: '35px' }}
+              style={{ paddingLeft: '35px', width: '100%', boxSizing: 'border-box' }}
               placeholder="Calle Falsa 123" 
             />
           </div>
@@ -301,9 +302,9 @@ function Clientes() {
       </div>
 
       {/* LISTA DE CLIENTES */}
-      <div className="tb-card" style={{ padding: '25px' }}>
+      <div className="tb-card" style={{ width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
         
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px', width: '100%' }}>
           <h3 className="tb-title" style={{ fontSize: '1.2em' }}>
             Directorio de Clientes
             <span style={{ fontSize: '0.8em', color: '#64748b', marginLeft: '10px', fontWeight: 'normal' }}>
@@ -311,8 +312,8 @@ function Clientes() {
             </span>
           </h3>
           
-          <div style={{ position: 'relative', width: '300px', display: 'flex', gap: '10px' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
+          <div className="responsive-search-box">
+            <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
                 <Search size={18} className="tb-filter-icon" />
                 <input 
                   type="text" 
@@ -321,10 +322,10 @@ function Clientes() {
                   onChange={(e) => setTerminoBusqueda(e.target.value)}
                   onKeyDown={handleKeyDownBusqueda}
                   className="tb-input"
-                  style={{ paddingLeft: '38px', width: '100%' }}
+                  style={{ paddingLeft: '38px', width: '100%', minHeight: '40px', boxSizing: 'border-box' }}
                 />
             </div>
-            <button className="tb-btn-save" onClick={aplicarBusqueda} style={{ padding: '0 15px', background: '#3b82f6' }}>
+            <button className="tb-btn-save" onClick={aplicarBusqueda} style={{ padding: '0 15px', background: '#3b82f6', minHeight: '40px', flexShrink: 0 }}>
                 Buscar
             </button>
           </div>
@@ -335,74 +336,169 @@ function Clientes() {
         ) : clientes.length === 0 ? (
           <p className="tb-loading" style={{ background: '#f8fafc', borderRadius: '8px' }}>No hay clientes registrados o que coincidan con la búsqueda.</p>
         ) : (
-          <div className="tb-table-wrapper">
-            <table className="tb-table">
-              <thead className="tb-thead">
-                <tr>
-                  <th className="tb-th" style={{ borderRadius: '8px 0 0 0' }}>Cliente</th>
-                  <th className="tb-th">Documento</th>
-                  <th className="tb-th">Contacto</th>
-                  <th className="tb-th" style={{ textAlign: 'right', borderRadius: '0 8px 0 0' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clientes.map(cliente => (
-                  <tr key={cliente.id} className="tb-tr">
-                    <td className="tb-td">
-                      <div className="tb-td-primary">
-                        {cliente.esEmpresa ? <Building2 size={18} color="#8b5cf6" /> : <User size={18} color="#3b82f6" />}
-                        <span>{cliente.nombreCliente}</span>
-                      </div>
-                    </td>
-                    <td className="tb-td tb-td-muted" style={{ fontSize: '0.9em' }}>
-                      {cliente.documentoCuit || '-'}
-                    </td>
-                    <td className="tb-td">
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85em', color: '#64748b' }}>
-                        {cliente.telefono && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Phone size={12} /> {cliente.telefono}</span>}
-                        {cliente.email && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={12} /> {cliente.email}</span>}
-                      </div>
-                    </td>
-                    <td className="tb-td" style={{ textAlign: 'right' }}>
-                      <div className="tb-actions" style={{ justifyContent: 'flex-end' }}>
-                        <button 
-                          onClick={() => editarCliente(cliente)} 
-                          className="tb-btn-icon" 
-                          style={{ 
-                            background: '#fef3c7', 
-                            color: '#d97706',
-                            opacity: esSoloLectura ? 0.4 : 1,
-                            cursor: esSoloLectura ? 'not-allowed' : 'pointer'
-                          }} 
-                          title={esSoloLectura ? "Modo solo lectura" : "Editar"}
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button 
-                          onClick={() => eliminarCliente(cliente.id)} 
-                          className="tb-btn-icon tb-btn-delete" 
-                          style={{
-                            opacity: esSoloLectura ? 0.4 : 1,
-                            cursor: esSoloLectura ? 'not-allowed' : 'pointer'
-                          }}
-                          title={esSoloLectura ? "Modo solo lectura" : "Eliminar"}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Vista Desktop / Tablet: Tabla */}
+            <div className="tb-table-wrapper clientes-desktop-table" style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <table className="tb-table" style={{ minWidth: '550px', width: '100%' }}>
+                <thead className="tb-thead">
+                  <tr>
+                    <th className="tb-th" style={{ borderRadius: '8px 0 0 0' }}>Cliente</th>
+                    <th className="tb-th">Documento</th>
+                    <th className="tb-th">Contacto</th>
+                    <th className="tb-th" style={{ textAlign: 'right', borderRadius: '0 8px 0 0' }}>Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {clientes.map(cliente => (
+                    <tr key={cliente.id} className="tb-tr">
+                      <td className="tb-td">
+                        <div className="tb-td-primary">
+                          {cliente.esEmpresa ? <Building2 size={18} color="#8b5cf6" /> : <User size={18} color="#3b82f6" />}
+                          <span>{cliente.nombreCliente}</span>
+                        </div>
+                      </td>
+                      <td className="tb-td tb-td-muted" style={{ fontSize: '0.9em' }}>
+                        {cliente.documentoCuit || '-'}
+                      </td>
+                      <td className="tb-td">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85em', color: '#64748b' }}>
+                          {cliente.telefono && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Phone size={12} /> {cliente.telefono}</span>}
+                          {cliente.email && <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={12} /> {cliente.email}</span>}
+                        </div>
+                      </td>
+                      <td className="tb-td" style={{ textAlign: 'right' }}>
+                        <div className="tb-actions" style={{ justifyContent: 'flex-end', gap: '8px' }}>
+                          <button 
+                            onClick={() => editarCliente(cliente)} 
+                            className="tb-btn-icon" 
+                            style={{ 
+                              background: '#fef3c7', 
+                              color: '#d97706',
+                              minWidth: '36px',
+                              minHeight: '36px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              opacity: esSoloLectura ? 0.4 : 1,
+                              cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                            }} 
+                            title={esSoloLectura ? "Modo solo lectura" : "Editar"}
+                            aria-label={`Editar ${cliente.nombreCliente}`}
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            onClick={() => eliminarCliente(cliente.id)} 
+                            className="tb-btn-icon tb-btn-delete" 
+                            style={{
+                              minWidth: '36px',
+                              minHeight: '36px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              opacity: esSoloLectura ? 0.4 : 1,
+                              cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                            }} 
+                            title={esSoloLectura ? "Modo solo lectura" : "Eliminar"}
+                            aria-label={`Eliminar ${cliente.nombreCliente}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Vista Mobile (< 640px): Tarjetas Adaptativas */}
+            <div className="clientes-mobile-cards">
+              {clientes.map(cliente => (
+                <div key={cliente.id} className="cliente-mobile-card">
+                  <div className="cliente-mobile-card-header">
+                    <div className="tb-td-primary" style={{ fontSize: '0.95em', fontWeight: 'bold' }}>
+                      {cliente.esEmpresa ? <Building2 size={18} color="#8b5cf6" /> : <User size={18} color="#3b82f6" />}
+                      <span>{cliente.nombreCliente}</span>
+                    </div>
+                    <div className="tb-actions" style={{ gap: '8px' }}>
+                      <button 
+                        onClick={() => editarCliente(cliente)} 
+                        className="tb-btn-icon" 
+                        style={{ 
+                          background: '#fef3c7', 
+                          color: '#d97706',
+                          minWidth: '38px',
+                          minHeight: '38px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          opacity: esSoloLectura ? 0.4 : 1,
+                          cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                        }} 
+                        title={esSoloLectura ? "Modo solo lectura" : "Editar"}
+                        aria-label={`Editar ${cliente.nombreCliente}`}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        onClick={() => eliminarCliente(cliente.id)} 
+                        className="tb-btn-icon tb-btn-delete" 
+                        style={{
+                          minWidth: '38px',
+                          minHeight: '38px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          opacity: esSoloLectura ? 0.4 : 1,
+                          cursor: esSoloLectura ? 'not-allowed' : 'pointer'
+                        }} 
+                        title={esSoloLectura ? "Modo solo lectura" : "Eliminar"}
+                        aria-label={`Eliminar ${cliente.nombreCliente}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="cliente-mobile-card-info">
+                    {cliente.documentoCuit && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <IdCard size={14} color="#64748b" />
+                        <span><strong>{cliente.esEmpresa ? 'CUIT' : 'DNI'}:</strong> {cliente.documentoCuit}</span>
+                      </div>
+                    )}
+                    {cliente.telefono && (
+                      <a href={`tel:${cliente.telefono}`} className="cliente-mobile-card-link">
+                        <Phone size={14} />
+                        <span>{cliente.telefono}</span>
+                      </a>
+                    )}
+                    {cliente.email && (
+                      <a href={`mailto:${cliente.email}`} className="cliente-mobile-card-link">
+                        <Mail size={14} />
+                        <span>{cliente.email}</span>
+                      </a>
+                    )}
+                    {cliente.direccion && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b' }}>
+                        <MapPin size={14} />
+                        <span>{cliente.direccion}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
 
             {/* Paginación */}
             {totalPaginas > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px', flexWrap: 'wrap' }}>
                 <button 
                   onClick={() => setPaginaActual(prev => Math.max(0, prev - 1))}
                   disabled={paginaActual === 0}
-                  style={{ padding: '8px 12px', background: paginaActual === 0 ? '#e2e8f0' : '#3b82f6', color: paginaActual === 0 ? '#94a3b8' : 'white', border: 'none', borderRadius: '8px', cursor: paginaActual === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                  style={{ minWidth: '40px', minHeight: '40px', padding: '8px 12px', background: paginaActual === 0 ? '#e2e8f0' : '#3b82f6', color: paginaActual === 0 ? '#94a3b8' : 'white', border: 'none', borderRadius: '8px', cursor: paginaActual === 0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="Página anterior"
                 >
                   <ChevronLeft size={18} />
                 </button>
@@ -412,13 +508,14 @@ function Clientes() {
                 <button 
                   onClick={() => setPaginaActual(prev => Math.min(totalPaginas - 1, prev + 1))}
                   disabled={paginaActual === totalPaginas - 1}
-                  style={{ padding: '8px 12px', background: paginaActual === totalPaginas - 1 ? '#e2e8f0' : '#3b82f6', color: paginaActual === totalPaginas - 1 ? '#94a3b8' : 'white', border: 'none', borderRadius: '8px', cursor: paginaActual === totalPaginas - 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                  style={{ minWidth: '40px', minHeight: '40px', padding: '8px 12px', background: paginaActual === totalPaginas - 1 ? '#e2e8f0' : '#3b82f6', color: paginaActual === totalPaginas - 1 ? '#94a3b8' : 'white', border: 'none', borderRadius: '8px', cursor: paginaActual === totalPaginas - 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  aria-label="Página siguiente"
                 >
                   <ChevronRight size={18} />
                 </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

@@ -76,41 +76,44 @@ const Suscripcion = () => {
   const planPro = planes.find(p => p.tipo === 'PRO' && p.frecuencia === frecuencia);
 
   return (
-    <div className="tb-container" style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="tb-container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       
       {/* HEADER DE SUSCRIPCIÓN */}
-      <div className="tb-header" style={{ marginBottom: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <h1 className="tb-title" style={{ fontSize: '2.5rem', marginBottom: '10px', justifyContent: 'center' }}>Mi Suscripción</h1>
-        <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Administrá tu plan y mantené tu taller operando sin límites.</p>
+      <div className="tb-header" style={{ marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <h1 className="tb-title" style={{ fontSize: 'clamp(1.6rem, 4vw, 2.5rem)', marginBottom: '10px', justifyContent: 'center' }}>Mi Suscripción</h1>
+        <p className="tb-subtitle" style={{ fontSize: '1rem' }}>Administrá tu plan y mantené tu taller operando sin límites.</p>
       </div>
 
       {/* ESTADO ACTUAL - TARJETA */}
       <div className="tb-card" style={{ 
-        padding: '30px', 
+        padding: 'clamp(18px, 4vw, 30px)', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '15px',
         boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
-        marginBottom: '40px',
+        marginBottom: '30px',
         border: `2px solid ${getStatusColor(estadoSusc)}30`
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ 
             background: `${getStatusColor(estadoSusc)}15`, 
-            padding: '20px', 
-            borderRadius: '20px' 
+            padding: '16px', 
+            borderRadius: '16px',
+            flexShrink: 0
           }}>
             {getStatusIcon(estadoSusc)}
           </div>
           <div>
-            <h2 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b', margin: '0 0 5px 0' }}>
+            <h2 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#64748b', margin: '0 0 4px 0' }}>
               Estado Actual - Plan {planActual}
             </h2>
-            <div style={{ fontSize: '2rem', fontWeight: '800', color: getStatusColor(estadoSusc) }}>
+            <div style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: '800', color: getStatusColor(estadoSusc) }}>
               {estadoSusc?.replace('_', ' ')}
             </div>
             {userProfile.fechaVencimiento && (
-              <p style={{ margin: '5px 0 0 0', color: '#475569', fontSize: '1.1rem' }}>
+              <p style={{ margin: '4px 0 0 0', color: '#475569', fontSize: '1rem' }}>
                 Vence el: <strong>{new Date(userProfile.fechaVencimiento).toLocaleDateString('es-AR')}</strong> 
                 {!estaVencida ? ` (En ${dias} días)` : ' (Expirada)'}
               </p>
@@ -120,43 +123,42 @@ const Suscripcion = () => {
       </div>
 
       {/* PLANES DISPONIBLES */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          <h2 className="tb-title" style={{ fontSize: '1.5rem', margin: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
+          <h2 className="tb-title" style={{ fontSize: '1.3rem', margin: 0 }}>
             Elegí tu Plan
           </h2>
-          <div style={{ display: 'flex', background: '#e2e8f0', padding: '5px', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', background: '#e2e8f0', padding: '4px', borderRadius: '12px', flexWrap: 'wrap', gap: '4px' }}>
               <button 
                   onClick={() => setFrecuencia('MENSUAL')}
-                  style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', background: frecuencia === 'MENSUAL' ? 'white' : 'transparent', boxShadow: frecuencia === 'MENSUAL' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none', color: '#0f172a' }}
+                  style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', background: frecuencia === 'MENSUAL' ? 'white' : 'transparent', boxShadow: frecuencia === 'MENSUAL' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none', color: '#0f172a', minHeight: '38px' }}
               >
                   Mensual
               </button>
               <button 
                   onClick={() => setFrecuencia('ANUAL')}
-                  style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', background: frecuencia === 'ANUAL' ? '#3b82f6' : 'transparent', boxShadow: frecuencia === 'ANUAL' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none', color: frecuencia === 'ANUAL' ? 'white' : '#0f172a' }}
+                  style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', background: frecuencia === 'ANUAL' ? '#3b82f6' : 'transparent', boxShadow: frecuencia === 'ANUAL' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none', color: frecuencia === 'ANUAL' ? 'white' : '#0f172a', minHeight: '38px' }}
               >
                   Anual (Ahorrá un 20%)
               </button>
           </div>
       </div>
       
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         
         {/* PLAN BASE */}
         {planBase && (
         <div className="tb-card" style={{
-          padding: '40px 30px',
+          padding: 'clamp(24px, 4vw, 36px) clamp(18px, 4vw, 28px)',
           boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
           display: 'flex',
           flexDirection: 'column',
           transition: 'transform 0.3s',
-          cursor: 'pointer',
           border: planActual === 'BASE' ? '2px solid #3b82f6' : '1px solid #e2e8f0'
         }}>
-          <h3 className="tb-title" style={{ fontSize: '1.5rem', margin: '0 0 10px 0' }}>Plan BASE</h3>
-          <p className="tb-subtitle" style={{ margin: '0 0 20px 0', minHeight: '40px' }}>Ideal para talleres que recién comienzan a digitalizarse.</p>
-          <div style={{ fontSize: '2.5rem', fontWeight: '800', color: '#0f172a', marginBottom: '30px' }}>
-            ${planBase.precio.toLocaleString('es-AR')} <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 'normal' }}>/ {frecuencia.toLowerCase()}</span>
+          <h3 className="tb-title" style={{ fontSize: '1.4rem', margin: '0 0 8px 0' }}>Plan BASE</h3>
+          <p className="tb-subtitle" style={{ margin: '0 0 16px 0', minHeight: '36px' }}>Ideal para talleres que recién comienzan a digitalizarse.</p>
+          <div style={{ fontSize: 'clamp(1.8rem, 4vw, 2.3rem)', fontWeight: '800', color: '#0f172a', marginBottom: '25px' }}>
+            ${planBase.precio.toLocaleString('es-AR')} <span style={{ fontSize: '0.95rem', color: '#64748b', fontWeight: 'normal' }}>/ {frecuencia.toLowerCase()}</span>
           </div>
           
           <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px 0', color: '#475569', display: 'flex', flexDirection: 'column', gap: '15px', flexGrow: 1 }}>
@@ -193,7 +195,7 @@ const Suscripcion = () => {
         {planPro && (
         <div className="tb-card" style={{
           background: 'linear-gradient(145deg, #1e293b 0%, #0f172a 100%)',
-          padding: '40px 30px',
+          padding: 'clamp(24px, 4vw, 36px) clamp(18px, 4vw, 28px)',
           boxShadow: '0 20px 40px rgba(15, 23, 42, 0.2)',
           display: 'flex',
           flexDirection: 'column',
@@ -209,13 +211,13 @@ const Suscripcion = () => {
             RECOMENDADO
           </div>
 
-          <h3 className="tb-title" style={{ fontSize: '1.5rem', color: 'white', margin: '0 0 10px 0' }}>Plan PRO</h3>
-          <p className="tb-subtitle" style={{ color: '#94a3b8', margin: '0 0 20px 0', minHeight: '40px' }}>Para talleres establecidos que necesitan control total del negocio.</p>
-          <div style={{ fontSize: '2.5rem', fontWeight: '800', color: 'white', marginBottom: '30px' }}>
-            ${planPro.precio.toLocaleString('es-AR')} <span style={{ fontSize: '1rem', color: '#94a3b8', fontWeight: 'normal' }}>/ {frecuencia.toLowerCase()}</span>
+          <h3 className="tb-title" style={{ fontSize: '1.4rem', color: 'white', margin: '0 0 8px 0' }}>Plan PRO</h3>
+          <p className="tb-subtitle" style={{ color: '#94a3b8', margin: '0 0 16px 0', minHeight: '36px' }}>Para talleres establecidos que necesitan control total del negocio.</p>
+          <div style={{ fontSize: 'clamp(1.8rem, 4vw, 2.3rem)', fontWeight: '800', color: 'white', marginBottom: '25px' }}>
+            ${planPro.precio.toLocaleString('es-AR')} <span style={{ fontSize: '0.95rem', color: '#94a3b8', fontWeight: 'normal' }}>/ {frecuencia.toLowerCase()}</span>
           </div>
           
-          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 40px 0', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '15px', flexGrow: 1 }}>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 35px 0', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '15px', flexGrow: 1 }}>
             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} color="#3b82f6" /> <strong>Todo lo del Plan BASE</strong></li>
             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} color="#3b82f6" /> Módulo de Inventario</li>
             <li style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><CheckCircle2 size={20} color="#3b82f6" /> Gestión de Equipo (Mecánicos)</li>
@@ -228,10 +230,11 @@ const Suscripcion = () => {
             className="tb-btn-save"
             style={{
               width: '100%',
-              padding: '15px',
+              minHeight: '48px',
+              padding: '14px',
               borderRadius: '12px',
               background: '#3b82f6',
-              fontSize: '1.1rem',
+              fontSize: '1.05rem',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

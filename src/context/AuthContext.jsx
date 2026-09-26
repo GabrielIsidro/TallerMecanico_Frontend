@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useEffect, useContext } from 'react';
 import api from '../lib/axiosConfig';
 import { jwtDecode } from 'jwt-decode';
@@ -9,6 +10,13 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUserProfile(null);
+    setRole(null);
+  };
 
   // Efecto que se ejecuta al montar la app o al cambiar el token
   useEffect(() => {
@@ -62,13 +70,6 @@ export const AuthProvider = ({ children }) => {
   const login = (newToken) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUserProfile(null);
-    setRole(null);
   };
 
   const isSuperAdmin = () => {

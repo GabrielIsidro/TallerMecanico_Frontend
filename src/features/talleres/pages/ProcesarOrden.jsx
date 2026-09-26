@@ -67,29 +67,6 @@ function ProcesarOrden() {
     ]
   });
 
-  useEffect(() => {
-    setCargando(true);
-    setErrorCarga(null);
-    Promise.all([
-      getOrdenById(id), 
-      getServicios()
-    ])
-    .then(([ordenEncontrada, resServicios]) => {
-      setServicios(resServicios.data);
-      if (ordenEncontrada) {
-        cargarDatosOrden(ordenEncontrada);
-      } else {
-        setErrorCarga("No se encontró la orden en el taller.");
-      }
-    })
-    .catch(err => {
-      console.error("Error cargando datos de orden:", err);
-      setErrorCarga("No se pudo cargar la orden. Es posible que no exista o pertenezca a otro taller.");
-      handleApiError(err, "Error al cargar los datos de la orden.");
-    })
-    .finally(() => setCargando(false));
-  }, [id])
-
   const cargarDatosOrden = (ordenDb) => {
       setOrden(ordenDb);
       setObservacionesMecanico(ordenDb.observacionesMecanico || '');
@@ -111,7 +88,28 @@ function ProcesarOrden() {
           }));
           setCarrito(carritoCargado);
       }
-  }
+  };
+
+  useEffect(() => {
+    Promise.all([
+      getOrdenById(id), 
+      getServicios()
+    ])
+    .then(([ordenEncontrada, resServicios]) => {
+      setServicios(resServicios.data);
+      if (ordenEncontrada) {
+        cargarDatosOrden(ordenEncontrada);
+      } else {
+        setErrorCarga("No se encontró la orden en el taller.");
+      }
+    })
+    .catch(err => {
+      console.error("Error cargando datos de orden:", err);
+      setErrorCarga("No se pudo cargar la orden. Es posible que no exista o pertenezca a otro taller.");
+      handleApiError(err, "Error al cargar los datos de la orden.");
+    })
+    .finally(() => setCargando(false));
+  }, [id])
 
   const agregarAlCarrito = (servicio) => {
     if (esSoloLectura) {
@@ -244,19 +242,19 @@ function ProcesarOrden() {
               <h4 style={{ color: '#475569', margin: '5px 0', borderBottom: '1px solid #e2e8f0', paddingBottom: '3px' }}>{title}</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                   {checklist[seccionName].map((item, idx) => (
-                      <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.9em' }}>
-                          <span style={{ width: '130px', fontWeight: '500', color: '#334155' }}>{item.label}</span>
-                          <div style={{ display: 'flex', gap: '2px' }}>
-                              <button onClick={() => handleChecklistChange(seccionName, idx, 'estado', 'B')} style={{ padding: '2px 8px', background: item.estado === 'B' ? '#22c55e' : '#f1f5f9', color: item.estado === 'B' ? 'white' : '#64748b', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>B</button>
-                              <button onClick={() => handleChecklistChange(seccionName, idx, 'estado', 'M')} style={{ padding: '2px 8px', background: item.estado === 'M' ? '#ef4444' : '#f1f5f9', color: item.estado === 'M' ? 'white' : '#64748b', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>M</button>
-                              <button onClick={() => handleChecklistChange(seccionName, idx, 'estado', 'NA')} style={{ padding: '2px 8px', background: item.estado === 'NA' ? '#94a3b8' : '#f1f5f9', color: item.estado === 'NA' ? 'white' : '#64748b', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85em' }}>N/A</button>
+                      <div key={item.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', fontSize: '0.9em', padding: '6px 0', borderBottom: '1px dashed #f1f5f9' }}>
+                          <span style={{ minWidth: '120px', flex: '1 1 120px', fontWeight: '500', color: '#334155' }}>{item.label}</span>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                              <button type="button" onClick={() => handleChecklistChange(seccionName, idx, 'estado', 'B')} style={{ minWidth: '32px', minHeight: '32px', padding: '4px 8px', background: item.estado === 'B' ? '#22c55e' : '#f1f5f9', color: item.estado === 'B' ? 'white' : '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>B</button>
+                              <button type="button" onClick={() => handleChecklistChange(seccionName, idx, 'estado', 'M')} style={{ minWidth: '32px', minHeight: '32px', padding: '4px 8px', background: item.estado === 'M' ? '#ef4444' : '#f1f5f9', color: item.estado === 'M' ? 'white' : '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>M</button>
+                              <button type="button" onClick={() => handleChecklistChange(seccionName, idx, 'estado', 'NA')} style={{ minWidth: '32px', minHeight: '32px', padding: '4px 8px', background: item.estado === 'NA' ? '#94a3b8' : '#f1f5f9', color: item.estado === 'NA' ? 'white' : '#64748b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85em' }}>N/A</button>
                           </div>
                           <input 
                               type="text" 
                               placeholder="Obs..." 
                               value={item.obs}
                               onChange={(e) => handleChecklistChange(seccionName, idx, 'obs', e.target.value)}
-                              style={{ flex: 1, padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.9em', color: '#334155' }}
+                              style={{ flex: '1 1 140px', minWidth: '130px', padding: '6px 8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.9em', color: '#334155' }}
                           />
                       </div>
                   ))}
@@ -314,15 +312,17 @@ function ProcesarOrden() {
             background: '#fef2f2',
             border: '1px solid #fca5a5',
             color: '#b91c1c',
-            padding: '12px 18px',
+            padding: '14px 18px',
             borderRadius: '10px',
             marginBottom: '20px',
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            gap: '12px'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <AlertTriangle size={20} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 260px' }}>
+              <AlertTriangle size={20} style={{ flexShrink: 0 }} />
               <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. Podés consultar la orden y descargar el comprobante, pero no modificar datos.</span>
             </div>
             <button 
@@ -331,10 +331,11 @@ function ProcesarOrden() {
                 background: '#ef4444',
                 color: 'white',
                 border: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
+                padding: '8px 16px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
+                minHeight: '40px'
               }}
             >
               Regularizar Plan
@@ -342,7 +343,7 @@ function ProcesarOrden() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr', gap: '30px' }}>
+        <div className="responsive-grid-2" style={{ gap: '24px' }}>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
@@ -357,7 +358,7 @@ function ProcesarOrden() {
                     <div key={nombreGrupo} style={{ marginBottom: '10px' }}>
                         <div 
                             onClick={() => toggleGrupo(nombreGrupo)}
-                            style={{ backgroundColor: '#f8fafc', padding: '12px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', color: '#1e40af', border: '1px solid #e2e8f0', transition: '0.2s' }}
+                            style={{ backgroundColor: '#f8fafc', padding: '12px 15px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', color: '#1e40af', border: '1px solid #e2e8f0', transition: '0.2s', minHeight: '44px' }}
                         >
                             <span>{nombreGrupo} ({serviciosAgrupados[nombreGrupo].length})</span>
                             <span>{gruposExpandidos[nombreGrupo] ? '🔽' : '▶️'}</span>
@@ -376,7 +377,7 @@ function ProcesarOrden() {
                                             </div>
                                         </td>
                                         <td style={{width: '100px', textAlign: 'right', padding: '10px 5px'}}>
-                                          <button className="tb-btn-save" onClick={() => agregarAlCarrito(s)} style={{padding: '6px 12px', fontSize: '0.9em', display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', background: '#3b82f6'}}>
+                                          <button className="tb-btn-save" onClick={() => agregarAlCarrito(s)} style={{padding: '8px 12px', fontSize: '0.9em', display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto', background: '#3b82f6', minHeight: '38px'}}>
                                               <Plus size={14}/> Agregar
                                           </button>
                                         </td>
@@ -396,7 +397,7 @@ function ProcesarOrden() {
               <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
                 <MessageSquare size={20}/> 2. Complicaciones y Recomendaciones
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="responsive-grid-half" style={{ gap: '16px' }}>
                   <div>
                       <label className="tb-label" style={{ color: '#b91c1c' }}>Para el Mecánico (Privadas)</label>
                       <textarea 
@@ -425,7 +426,7 @@ function ProcesarOrden() {
               <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
                 <ClipboardList size={20}/> 3. Hoja de Inspección (Checklist Final)
               </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="responsive-grid-half" style={{ gap: '16px' }}>
                   <div>
                       {renderChecklistSection('exterior', 'Exterior')}
                       {renderChecklistSection('motor', 'Parte Motor')}
@@ -439,7 +440,7 @@ function ProcesarOrden() {
           </div>
 
           <div>
-            <div className="tb-card" style={{ borderTop: '5px solid #f59e0b', position: 'sticky', top: '20px' }}>
+            <div className="tb-card" style={{ borderTop: '5px solid #f59e0b' }}>
               <h3 className="tb-title" style={{ color: '#1e40af', fontSize: '1.2em' }}>
                 <ShoppingCart size={20}/> Resumen de Orden
               </h3>
@@ -453,7 +454,7 @@ function ProcesarOrden() {
                           onChange={(e) => setKilometraje(e.target.value)}
                           className="tb-input"
                           placeholder="Ej: 150000"
-                          style={{ padding: '6px 10px', fontSize: '0.95em' }}
+                          style={{ padding: '8px 12px', fontSize: '0.95em', minHeight: '40px' }}
                       />
                       <span style={{ color: '#64748b', fontSize: '0.9em', fontWeight: 'bold' }}>KM</span>
                   </div>
@@ -466,19 +467,24 @@ function ProcesarOrden() {
                     <ul style={{ listStyle: 'none', padding: 0, maxHeight: '350px', overflowY: 'auto' }}>
                     {carrito.map((item, index) => (
                         <li key={index} style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                 <div style={{ fontSize: '0.95em', color:'#334155', fontWeight: 'bold' }}>{item.nombre}</div>
-                                <button className="tb-btn-icon tb-btn-delete" style={{ padding: '4px', background: 'transparent', color: '#ef4444' }} onClick={() => quitarDelCarrito(index)}>
+                                <button 
+                                  className="tb-btn-icon tb-btn-delete" 
+                                  style={{ width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fee2e2', color: '#ef4444', borderRadius: '8px' }} 
+                                  onClick={() => quitarDelCarrito(index)}
+                                  aria-label={`Eliminar ${item.nombre}`}
+                                >
                                     <Trash2 size={16}/>
                                 </button>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                 <span style={{ fontSize: '0.9em', color: '#64748b' }}>Precio: $</span>
                                 <input 
                                     type="number"
                                     value={item.precioEstimado}
                                     onChange={(e) => actualizarPrecioCarrito(index, e.target.value)}
-                                    style={{ padding: '4px 8px', border: '1px solid #94a3b8', borderRadius: '4px', width: '100px', fontWeight: 'bold', color: '#166534' }}
+                                    style={{ padding: '6px 10px', border: '1px solid #94a3b8', borderRadius: '6px', width: '120px', fontWeight: 'bold', color: '#166534', minHeight: '36px' }}
                                 />
                                 <Edit2 size={14} color="#94a3b8"/>
                             </div>
@@ -500,6 +506,7 @@ function ProcesarOrden() {
                     style={{
                       width: '100%', 
                       background: esSoloLectura ? '#94a3b8' : '#3b82f6', 
+                      minHeight: '46px',
                       padding: '12px', 
                       display: 'flex', 
                       justifyContent: 'center', 
@@ -516,6 +523,7 @@ function ProcesarOrden() {
                     style={{
                       width: '100%', 
                       background: esSoloLectura ? '#94a3b8' : '#10b981', 
+                      minHeight: '46px',
                       padding: '12px', 
                       display: 'flex', 
                       justifyContent: 'center', 
@@ -525,7 +533,20 @@ function ProcesarOrden() {
                   >
                     <CheckCircle size={18} style={{marginRight: '8px'}}/> FINALIZAR ORDEN
                   </button>
-                  <button type="button" className="tb-btn-save" onClick={descargarPDF} style={{width: '100%', background: '#64748b', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+                  <button 
+                    type="button" 
+                    className="tb-btn-save" 
+                    onClick={descargarPDF} 
+                    style={{
+                      width: '100%', 
+                      background: '#64748b', 
+                      minHeight: '46px',
+                      padding: '12px', 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center'
+                    }}
+                  >
                     <FileText size={18} style={{marginRight: '8px'}}/> DESCARGAR COMPROBANTE (PDF)
                   </button>
               </div>

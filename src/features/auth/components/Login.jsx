@@ -35,7 +35,7 @@ function Login() {
       let response;
       try {
         response = await loginAdmin(email, password);
-      } catch (adminErr) {
+      } catch {
         response = await loginTaller(email, password);
       }
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
-import api from '../lib/axiosConfig'
 import {
   LayoutDashboard,
   FileText,
@@ -16,7 +15,9 @@ import {
   User,
   CreditCard,
   UserPlus,
-  Lock
+  Lock,
+  Menu,
+  X
 } from 'lucide-react'
 
 import { useAuth } from '../context/AuthContext'
@@ -45,6 +46,7 @@ function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuPerfilAbierto, setMenuPerfilAbierto] = useState(false);
+  const [sidebarAbierto, setSidebarAbierto] = useState(false);
 
   const esSuperAdminVal = isSuperAdmin();
   const estaSuspendida = !esSuperAdminVal && userProfile?.estadoSuscripcion === 'SUSPENDIDA';
@@ -60,6 +62,17 @@ function DashboardLayout() {
       navigate('/suscripcion', { replace: true });
     }
   }, [estaSuspendida, estaVencida, location.pathname, navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSidebarAbierto(false);
+        setMenuPerfilAbierto(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -94,10 +107,116 @@ function DashboardLayout() {
     { path: '/equipo', name: 'Mi Equipo', icon: UserPlus, adminOnly: true, proOnly: true },
   ];
 
+  const renderDropdownMenu = () => (
+    <>
+      <div className="dl-dropdown-menu">
+        <div
+          onClick={() => {
+            navigate('/perfil');
+            setMenuPerfilAbierto(false);
+          }}
+          className="dl-dropdown-item"
+        >
+          <User size={18} color="#64748b" />
+          Mi Perfil y Seguridad
+        </div>
+
+        {!esSuperAdminVal && !isMecanico() && (
+          <div
+            onClick={() => {
+              navigate('/suscripcion');
+              setMenuPerfilAbierto(false);
+            }}
+            className="dl-dropdown-item"
+          >
+            <CreditCard size={18} color="#64748b" />
+            Mi Suscripción y Planes
+          </div>
+        )}
+
+        <div className="dl-dropdown-divider"></div>
+
+        <div
+          onClick={() => {
+            logout();
+            setMenuPerfilAbierto(false);
+            navigate('/login');
+          }}
+          className="dl-dropdown-item dl-dropdown-item-danger"
+        >
+          <LogOut size={18} color="#ef4444" />
+          Cerrar Sesión
+        </div>
+      </div>
+
+      <div
+        onClick={() => setMenuPerfilAbierto(false)}
+        className="dl-overlay"
+        aria-hidden="true"
+      ></div>
+    </>
+  );
+
   return (
     <div className="dashboard-layout">
-      <aside className="sidebar">
-        <div className="logo" onClick={() => navigate('/')} title="PatitoFix - Inicio">
+      {/* Barra superior visible únicamente en Mobile y Tablet (< 1024px) */}
+      <header className="mobile-top-bar">
+        <button 
+          type="button" 
+          className="mobile-menu-btn" 
+          onClick={() => setSidebarAbierto(true)}
+          aria-label="Abrir menú de navegación"
+          aria-expanded={sidebarAbierto}
+        >
+          <Menu size={24} />
+        </button>
+
+        <div 
+          onClick={() => { navigate('/'); setSidebarAbierto(false); }} 
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          title="PatitoFix - Inicio"
+        >
+          <img src={logoApp} alt="PatitoFix" className="mobile-logo-img" />
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          <button 
+            type="button"
+            className="mobile-menu-btn"
+            onClick={() => setMenuPerfilAbierto(!menuPerfilAbierto)}
+            aria-label="Menú de perfil"
+            aria-expanded={menuPerfilAbierto}
+          >
+            <UserCircle size={26} color="#60a5fa" />
+          </button>
+          {menuPerfilAbierto && renderDropdownMenu()}
+        </div>
+      </header>
+
+      {/* Backdrop del Drawer en Mobile */}
+      <div 
+        className={`sidebar-backdrop ${sidebarAbierto ? 'open' : ''}`} 
+        onClick={() => setSidebarAbierto(false)} 
+        aria-hidden="true"
+      />
+
+      <aside className={`sidebar ${sidebarAbierto ? 'open' : ''}`} aria-label="Navegación principal">
+        {/* Cabecera del Drawer visible solo en mobile */}
+        <div className="sidebar-header-mobile">
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <img src={logoApp} alt="PatitoFix" style={{ height: '36px', width: 'auto' }} />
+          </div>
+          <button 
+            type="button" 
+            className="sidebar-close-btn" 
+            onClick={() => setSidebarAbierto(false)}
+            aria-label="Cerrar menú"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="logo" onClick={() => { navigate('/'); setSidebarAbierto(false); }} title="PatitoFix - Inicio">
           <img 
             src={logoApp} 
             alt="PatitoFix - Gestión Integral para Talleres" 
@@ -114,6 +233,7 @@ function DashboardLayout() {
             const estaBloqueado = bloqueadoPorSuspension || bloqueadoPorGracia;
 
             const handleClick = () => {
+              setSidebarAbierto(false);
               if (bloqueadoPorSuspension) {
                 toast.error("Tu suscripción está suspendida. Regularizá tu plan para acceder.", { id: 'nav-suspendida' });
                 navigate('/suscripcion');
@@ -147,7 +267,10 @@ function DashboardLayout() {
           {esSuperAdminVal && (
             <div
               className={`menu-item ${isActive('/') ? 'active' : ''} dl-menu-admin`}
-              onClick={() => navigate('/')}
+              onClick={() => {
+                setSidebarAbierto(false);
+                navigate('/');
+              }}
             >
               <ShieldCheck size={20} color="#8b5cf6" />
               SaaS Admin
@@ -158,6 +281,7 @@ function DashboardLayout() {
       </aside>
 
       <main className="main-content">
+        {/* Cabecera de perfil en escritorio (oculta en mobile para no duplicar) */}
         <div className="dl-header-container">
           <div
             onClick={() => setMenuPerfilAbierto(!menuPerfilAbierto)}
@@ -175,54 +299,7 @@ function DashboardLayout() {
             <Wrench size={16} color="#94a3b8" className={`dl-profile-icon ${menuPerfilAbierto ? 'open' : ''}`} />
           </div>
 
-          {menuPerfilAbierto && (
-            <div className="dl-dropdown-menu">
-              <div
-                onClick={() => {
-                  navigate('/perfil');
-                  setMenuPerfilAbierto(false);
-                }}
-                className="dl-dropdown-item"
-              >
-                <User size={18} color="#64748b" />
-                Mi Perfil y Seguridad
-              </div>
-
-              {!esSuperAdminVal && !isMecanico() && (
-                <div
-                  onClick={() => {
-                    navigate('/suscripcion');
-                    setMenuPerfilAbierto(false);
-                  }}
-                  className="dl-dropdown-item"
-                >
-                  <CreditCard size={18} color="#64748b" />
-                  Mi Suscripción y Planes
-                </div>
-              )}
-
-              <div className="dl-dropdown-divider"></div>
-
-              <div
-                onClick={() => {
-                  logout();
-                  setMenuPerfilAbierto(false);
-                  navigate('/login');
-                }}
-                className="dl-dropdown-item dl-dropdown-item-danger"
-              >
-                <LogOut size={18} color="#ef4444" />
-                Cerrar Sesión
-              </div>
-            </div>
-          )}
-
-          {menuPerfilAbierto && (
-            <div
-              onClick={() => setMenuPerfilAbierto(false)}
-              className="dl-overlay"
-            ></div>
-          )}
+          {menuPerfilAbierto && renderDropdownMenu()}
         </div>
 
         <Routes>

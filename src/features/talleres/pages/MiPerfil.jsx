@@ -110,12 +110,12 @@ function MiPerfil() {
   }
 
   return (
-    <div className="tb-container" style={{ padding: '25px', maxWidth: '800px', margin: '0 auto' }}>
+    <div className="tb-container" style={{ maxWidth: '800px', margin: '0 auto' }}>
       
       <div className="tb-header">
-        <h1 className="tb-title" style={{ fontSize: '2em' }}>
-          <div style={{ background: '#dbeafe', padding: '12px', borderRadius: '12px', display: 'flex' }}>
-            <User size={30} color="#3b82f6" />
+        <h1 className="tb-title" style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>
+          <div style={{ background: '#dbeafe', padding: '10px', borderRadius: '12px', display: 'flex' }}>
+            <User size={28} color="#3b82f6" />
           </div>
           Configuración de Perfil
         </h1>
@@ -124,7 +124,7 @@ function MiPerfil() {
       <form onSubmit={handleSubmit}>
         
         {/* SECCIÓN 1: DATOS PERSONALES */}
-        <div className="tb-card" style={{ padding: '35px', marginBottom: '25px' }}>
+        <div className="tb-card" style={{ padding: 'clamp(18px, 4vw, 32px)', marginBottom: '25px' }}>
           <h3 className="tb-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '25px', fontSize: '1.2em' }}>
             <Contact size={22} color="#64748b" />
             Datos Personales
@@ -134,25 +134,25 @@ function MiPerfil() {
             <div style={{ position: 'relative' }}>
               <label className="tb-label">Nombre</label>
               <User size={17} className="tb-filter-icon" />
-              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="tb-input" style={{ paddingLeft: '38px' }} required />
+              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="tb-input" style={{ paddingLeft: '38px', minHeight: '42px' }} required />
             </div>
             <div style={{ position: 'relative' }}>
               <label className="tb-label">Apellido</label>
               <User size={17} className="tb-filter-icon" />
-              <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} className="tb-input" style={{ paddingLeft: '38px' }} required />
+              <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} className="tb-input" style={{ paddingLeft: '38px', minHeight: '42px' }} required />
             </div>
           </div>
 
           <div style={{ position: 'relative' }}>
             <label className="tb-label">Correo Electrónico (No editable)</label>
             <Mail size={17} className="tb-filter-icon" />
-            <input type="email" value={email} className="tb-input" style={{ paddingLeft: '38px', background: '#f1f5f9', cursor: 'not-allowed' }} readOnly title="El email es tu identificador y no se puede cambiar." />
+            <input type="email" value={email} className="tb-input" style={{ paddingLeft: '38px', background: '#f1f5f9', cursor: 'not-allowed', minHeight: '42px' }} readOnly title="El email es tu identificador y no se puede cambiar." />
           </div>
         </div>
 
         {/* SECCIÓN 2: ESTADO DE LA SUSCRIPCIÓN DEL TALLER */}
         {tallerInfo && (
-          <div className="tb-card" style={{ padding: '30px', marginBottom: '25px', background: '#ffffff' }}>
+          <div className="tb-card" style={{ padding: 'clamp(18px, 4vw, 30px)', marginBottom: '25px', background: '#ffffff' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
               <h3 className="tb-title" style={{ margin: 0, fontSize: '1.2em' }}>
                 <CreditCard size={22} color="#3b82f6" />
@@ -174,7 +174,8 @@ function MiPerfil() {
                     border: '1px solid #bfdbfe',
                     fontWeight: 600,
                     fontSize: '0.9em',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    minHeight: '38px'
                   }}
                 >
                   <ExternalLink size={15} /> Ver Planes y Mejorar
@@ -208,7 +209,7 @@ function MiPerfil() {
         )}
 
         {/* SECCIÓN 3: SEGURIDAD (OPCIONAL) */}
-        <div className="tb-card" style={{ padding: '35px', marginBottom: '25px' }}>
+        <div className="tb-card" style={{ padding: 'clamp(18px, 4vw, 32px)', marginBottom: '25px' }}>
           <h3 className="tb-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '15px', fontSize: '1.2em' }}>
             <ShieldCheck size={22} color="#10b981" />
             Cambiar Contraseña (Opcional)
@@ -222,33 +223,41 @@ function MiPerfil() {
             <div style={{ position: 'relative' }}>
               <label className="tb-label">Contraseña Actual</label>
               <Lock size={17} className="tb-filter-icon" />
-              <input type="password" placeholder="Para validar el cambio" value={passwordActual} onChange={(e) => setPasswordActual(e.target.value)} className="tb-input" style={{ paddingLeft: '38px' }} />
+              <input type="password" placeholder="Para validar el cambio" value={passwordActual} onChange={(e) => setPasswordActual(e.target.value)} className="tb-input" style={{ paddingLeft: '38px', minHeight: '42px' }} />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
               <div style={{ position: 'relative' }}>
                 <label className="tb-label">Nueva Contraseña</label>
                 <KeyRound size={17} className="tb-filter-icon" />
-                <input type="password" placeholder="Mínimo 6 caracteres" value={passwordNueva} onChange={(e) => setPasswordNueva(e.target.value)} className="tb-input" style={{ paddingLeft: '38px' }} />
+                <input type="password" placeholder="Mínimo 6 caracteres" value={passwordNueva} onChange={(e) => setPasswordNueva(e.target.value)} className="tb-input" style={{ paddingLeft: '38px', minHeight: '42px' }} />
               </div>
               <div style={{ position: 'relative' }}>
                 <label className="tb-label">Repetir Nueva</label>
                 <KeyRound size={17} className="tb-filter-icon" />
-                <input type="password" placeholder="Confirmá tu nueva clave" value={passwordConfirmacion} onChange={(e) => setPasswordConfirmacion(e.target.value)} className="tb-input" style={{ paddingLeft: '38px' }} />
+                <input type="password" placeholder="Confirmá tu nueva clave" value={passwordConfirmacion} onChange={(e) => setPasswordConfirmacion(e.target.value)} className="tb-input" style={{ paddingLeft: '38px', minHeight: '42px' }} />
               </div>
             </div>
           </div>
         </div>
 
         {/* BOTÓN DE GUARDADO FINAL */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '25px' }}>
           <button 
             type="submit" 
             disabled={guardando}
             className="tb-btn-save"
             style={{ 
-              padding: '14px 40px', 
-              fontSize: '1.05em', cursor: guardando ? 'not-allowed' : 'pointer', background: '#3b82f6'
+              width: '100%',
+              maxWidth: '300px',
+              padding: '14px 30px', 
+              fontSize: '1.05em', 
+              cursor: guardando ? 'not-allowed' : 'pointer', 
+              background: '#3b82f6',
+              minHeight: '48px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
             }}
           >
             {guardando ? 'Guardando cambios...' : 'Guardar Todo'}

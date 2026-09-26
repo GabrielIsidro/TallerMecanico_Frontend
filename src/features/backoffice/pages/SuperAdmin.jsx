@@ -22,13 +22,7 @@ function SuperAdmin() {
     const [editandoPlan, setEditandoPlan] = useState(null);
     const [nuevoPrecio, setNuevoPrecio] = useState('');
 
-    useEffect(() => {
-        cargarTalleres()
-        cargarPlanes()
-    }, [])
-
     const cargarPlanes = () => {
-        setCargandoPlanes(true)
         getPlanes()
             .then(res => {
                 setPlanes(res.data)
@@ -40,6 +34,24 @@ function SuperAdmin() {
                 setCargandoPlanes(false)
             })
     }
+
+    const cargarTalleres = () => {
+        getTalleres()
+            .then(res => {
+                setTalleres(res.data)
+                setCargando(false)
+            })
+            .catch(err => {
+                console.error(err)
+                toast.error("Error al cargar la lista de clientes (talleres).")
+                setCargando(false)
+            })
+    }
+
+    useEffect(() => {
+        cargarTalleres()
+        cargarPlanes()
+    }, [])
 
     const guardarPrecioPlan = (id) => {
         const toastId = toast.loading("Actualizando plan...");
@@ -66,20 +78,6 @@ function SuperAdmin() {
                 console.error(e);
                 toast.error("Error al cambiar estado.", { id: toastId });
             });
-    }
-
-    const cargarTalleres = () => {
-        setCargando(true)
-        getTalleres()
-            .then(res => {
-                setTalleres(res.data)
-                setCargando(false)
-            })
-            .catch(err => {
-                console.error(err)
-                toast.error("Error al cargar la lista de clientes (talleres).")
-                setCargando(false)
-            })
     }
 
     const registrarTaller = (e) => {
@@ -167,16 +165,16 @@ function SuperAdmin() {
                 <p className="sa-subtitle">Gestioná tus clientes, altas de talleres y suscripciones al software PatitoFix.</p>
             </div>
 
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                 <button
                     onClick={() => setTab('talleres')}
-                    style={{ padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold', background: tab === 'talleres' ? '#3b82f6' : '#e2e8f0', color: tab === 'talleres' ? 'white' : '#475569' }}
+                    style={{ padding: '10px 18px', minHeight: '42px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold', background: tab === 'talleres' ? '#3b82f6' : '#e2e8f0', color: tab === 'talleres' ? 'white' : '#475569' }}
                 >
                     Gestión de Inquilinos
                 </button>
                 <button
                     onClick={() => setTab('planes')}
-                    style={{ padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold', background: tab === 'planes' ? '#3b82f6' : '#e2e8f0', color: tab === 'planes' ? 'white' : '#475569' }}
+                    style={{ padding: '10px 18px', minHeight: '42px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold', background: tab === 'planes' ? '#3b82f6' : '#e2e8f0', color: tab === 'planes' ? 'white' : '#475569' }}
                 >
                     Gestión de Planes y Precios
                 </button>
@@ -206,8 +204,8 @@ function SuperAdmin() {
                                 <input type="email" value={emailContacto} onChange={e => setEmailContacto(e.target.value)} placeholder="admin@mail.com" className="sa-input" />
                             </div>
                             <div style={{ gridColumn: '1 / -1', background: 'rgba(59, 130, 246, 0.08)', padding: '12px 16px', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.25)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <ShieldCheck size={18} color="#3b82f6" />
-                                <span style={{ fontSize: '0.88em', color: '#93c5fd' }}>
+                                <ShieldCheck size={18} color="#3b82f6" style={{ flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.88em', color: '#1e40af' }}>
                                     Se generará automáticamente una clave temporal aleatoria de 10 caracteres que se enviará por correo al dueño del taller para su primer ingreso.
                                 </span>
                             </div>
@@ -283,6 +281,7 @@ function SuperAdmin() {
                                                             onClick={() => eliminarTaller(t.id)}
                                                             className="sa-btn-delete"
                                                             title="Eliminar Taller"
+                                                            aria-label={`Eliminar taller ${t.nombre}`}
                                                         >
                                                             <Trash2 size={18} />
                                                         </button>

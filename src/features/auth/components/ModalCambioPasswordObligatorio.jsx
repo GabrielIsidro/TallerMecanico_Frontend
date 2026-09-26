@@ -68,10 +68,12 @@ function ModalCambioPasswordObligatorio() {
         borderRadius: '20px',
         maxWidth: '480px',
         width: '100%',
-        padding: '35px 30px',
+        padding: '30px 20px',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
         border: '1px solid #e2e8f0',
-        color: '#1e293b'
+        color: '#1e293b',
+        maxHeight: '90vh',
+        overflowY: 'auto'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{

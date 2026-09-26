@@ -78,20 +78,20 @@ const Equipo = () => {
   if (cargando) return <div className="tb-loading" style={{ padding: '30px' }}>Cargando equipo...</div>;
 
   return (
-    <div className="tb-container" style={{ padding: '30px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div className="tb-container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
       
       {/* HEADER */}
-      <div className="tb-header" style={{ marginBottom: '30px' }}>
+      <div className="tb-header" style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
-          <h1 className="tb-title" style={{ fontSize: '2.5rem' }}>
-            <Users size={40} color="#8b5cf6" /> Mi Equipo
+          <h1 className="tb-title" style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)' }}>
+            <Users size={36} color="#8b5cf6" /> Mi Equipo
           </h1>
-          <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Administrá los accesos de tus mecánicos y empleados.</p>
+          <p className="tb-subtitle" style={{ fontSize: '1rem' }}>Administrá los accesos de tus mecánicos y empleados.</p>
         </div>
         <button 
           onClick={() => setMostrarForm(!mostrarForm)}
           className="tb-btn-add"
-          style={{ padding: '12px 24px', borderRadius: '12px', background: mostrarForm ? '#64748b' : '#8b5cf6' }}
+          style={{ padding: '12px 20px', borderRadius: '12px', minHeight: '44px', background: mostrarForm ? '#64748b' : '#8b5cf6', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           {mostrarForm ? 'Cancelar' : <><UserPlus size={20} /> Nuevo Mecánico</>}
         </button>
@@ -99,29 +99,29 @@ const Equipo = () => {
 
       {/* FORMULARIO */}
       {mostrarForm && (
-        <div className="tb-card" style={{ padding: '30px', borderRadius: '20px', marginBottom: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ margin: '0 0 20px 0', color: '#1e293b' }}>Crear Cuenta de Mecánico</h2>
+        <div className="tb-card" style={{ padding: '24px', borderRadius: '16px', marginBottom: '25px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '1.25rem' }}>Crear Cuenta de Mecánico</h2>
           <p className="tb-subtitle" style={{ marginBottom: '20px' }}>
             Los mecánicos solo pueden ver los vehículos, clientes y gestionar el estado de las órdenes de trabajo. No tienen acceso a facturación ni configuraciones.
           </p>
-          <form onSubmit={agregarMecanico} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', alignItems: 'end' }}>
+          <form onSubmit={agregarMecanico} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'end' }}>
             <div>
               <label className="tb-label">Nombre *</label>
-              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="tb-input" placeholder="Carlos" required />
+              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="tb-input" placeholder="Carlos" style={{ minHeight: '40px' }} required />
             </div>
             <div>
               <label className="tb-label">Apellido</label>
-              <input type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="tb-input" placeholder="López" />
+              <input type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="tb-input" placeholder="López" style={{ minHeight: '40px' }} />
             </div>
             <div>
               <label className="tb-label">Email (Usuario) *</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="tb-input" placeholder="carlos@taller.com" required />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="tb-input" placeholder="carlos@taller.com" style={{ minHeight: '40px' }} required />
             </div>
             <div>
               <label className="tb-label">Contraseña *</label>
-              <input type="text" value={password} onChange={e => setPassword(e.target.value)} className="tb-input" placeholder="clave123" required />
+              <input type="text" value={password} onChange={e => setPassword(e.target.value)} className="tb-input" placeholder="clave123" style={{ minHeight: '40px' }} required />
             </div>
-            <button type="submit" className="tb-btn-save" style={{ background: '#8b5cf6', height: '46px' }}>
+            <button type="submit" className="tb-btn-save" style={{ background: '#8b5cf6', height: '44px', minHeight: '44px' }}>
               Registrar Mecánico
             </button>
           </form>
@@ -129,29 +129,29 @@ const Equipo = () => {
       )}
 
       {/* LISTA DE MECÁNICOS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
         
         {/* Tarjeta del Dueño (Informativa) */}
-        <div className="tb-card" style={{ padding: '25px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '20px', background: '#f8fafc' }}>
-          <div style={{ background: '#e0e7ff', padding: '15px', borderRadius: '15px' }}>
-            <Shield size={30} color="#4f46e5" />
+        <div className="tb-card" style={{ padding: '20px', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '16px', background: '#f8fafc' }}>
+          <div style={{ background: '#e0e7ff', padding: '12px', borderRadius: '12px', flexShrink: 0 }}>
+            <Shield size={28} color="#4f46e5" />
           </div>
           <div>
-            <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>Dueño / Admin</h3>
+            <h3 style={{ margin: '0 0 4px 0', color: '#1e293b' }}>Dueño / Admin</h3>
             <p style={{ margin: 0, color: '#64748b', fontSize: '0.9em' }}>Tiene acceso total al sistema.</p>
           </div>
         </div>
 
         {equipo.map(m => (
-          <div key={m.id} className="tb-card" style={{ padding: '25px', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ background: '#fef3c7', padding: '15px', borderRadius: '15px' }}>
-                <Wrench size={30} color="#d97706" />
+          <div key={m.id} className="tb-card" style={{ padding: '20px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{ background: '#fef3c7', padding: '12px', borderRadius: '12px', flexShrink: 0 }}>
+                <Wrench size={26} color="#d97706" />
               </div>
               <div>
-                <h3 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>{m.nombre} {m.apellido}</h3>
-                <p style={{ margin: 0, color: '#64748b', fontSize: '0.9em' }}>{m.email}</p>
-                <span className="tb-badge" style={{ marginTop: '5px', background: '#f1f5f9', color: '#475569' }}>
+                <h3 style={{ margin: '0 0 4px 0', color: '#1e293b' }}>{m.nombre} {m.apellido}</h3>
+                <p style={{ margin: 0, color: '#64748b', fontSize: '0.9em', wordBreak: 'break-all' }}>{m.email}</p>
+                <span className="tb-badge" style={{ marginTop: '5px', background: '#f1f5f9', color: '#475569', display: 'inline-block' }}>
                   MECÁNICO
                 </span>
               </div>
@@ -159,8 +159,9 @@ const Equipo = () => {
             <button 
               onClick={() => eliminarMecanico(m.id, m.nombre)}
               className="tb-btn-icon tb-btn-delete"
-              style={{ padding: '10px', borderRadius: '10px' }}
+              style={{ width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title="Eliminar Acceso"
+              aria-label={`Eliminar acceso a ${m.nombre} ${m.apellido}`}
             >
               <UserX size={20} />
             </button>

@@ -21,6 +21,7 @@ function Historial() {
   const [ordenes, setOrdenes] = useState([])
   const [busqueda, setBusqueda] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [columnaMobile, setColumnaMobile] = useState('activas')
   const navigate = useNavigate()
   
   // Para tablero Kanban traemos un lote más grande (ej: 100)
@@ -29,12 +30,7 @@ function Historial() {
   const [totalElementos, setTotalElementos] = useState(0);
   const size = 100;
 
-  useEffect(() => {
-    cargarOrdenes(paginaActual, size)
-  }, [paginaActual])
-
   const cargarOrdenes = (page = 0, size = 100) => {
-    setCargando(true)
     getOrdenes(page, size)
       .then(res => {
         setOrdenes(res.data.content || [])
@@ -47,6 +43,10 @@ function Historial() {
         handleApiError(err, "Error al cargar el historial desde el servidor.");
       })
   }
+
+  useEffect(() => {
+    cargarOrdenes(paginaActual, size)
+  }, [paginaActual])
 
   const cambiarEstado = (orden, nuevoEstado) => {
     const toastId = toast.loading("Actualizando estado...");
@@ -176,12 +176,24 @@ function Historial() {
                     <div style={{ fontWeight: 'bold', color: '#166534', fontSize: '1.1em', marginBottom: '8px' }}>
                         ${(o.costoTotal || 0).toLocaleString()}
                     </div>
-                    <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => descargarPDF(o)} className="tb-btn-icon tb-btn-delete" title="Descargar PDF" style={{ padding: '6px' }}>
-                            <Download size={16} />
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button 
+                          onClick={() => descargarPDF(o)} 
+                          className="tb-btn-icon tb-btn-delete" 
+                          title="Descargar PDF" 
+                          aria-label={`Descargar PDF orden #${o.id}`}
+                          style={{ minWidth: '38px', minHeight: '38px', padding: '8px' }}
+                        >
+                            <Download size={18} />
                         </button>
-                        <button onClick={() => abrirProcesador(o.id)} className="tb-btn-icon" title="Procesar Orden" style={{ background: '#e2e8f0', color: '#475569', padding: '6px' }}>
-                            <Wrench size={16} />
+                        <button 
+                          onClick={() => abrirProcesador(o.id)} 
+                          className="tb-btn-icon" 
+                          title="Procesar Orden" 
+                          aria-label={`Procesar orden #${o.id}`}
+                          style={{ background: '#e2e8f0', color: '#475569', minWidth: '38px', minHeight: '38px', padding: '8px' }}
+                        >
+                            <Wrench size={18} />
                         </button>
                     </div>
                 </div>
@@ -207,7 +219,7 @@ function Historial() {
               <p className="tb-subtitle">Gestioná el estado de los vehículos en el taller (Tablero Kanban).</p>
           </div>
           
-          <div style={{ position: 'relative', width: '300px' }}>
+          <div className="responsive-search-container">
               <Search size={18} className="tb-filter-icon" />
               <input 
                 type="text" 
@@ -215,7 +227,7 @@ function Historial() {
                 value={busqueda}
                 onChange={e => setBusqueda(e.target.value)}
                 className="tb-input"
-                style={{ paddingLeft: '35px', border: '2px solid #3b82f6' }}
+                style={{ paddingLeft: '35px', border: '2px solid #3b82f6', width: '100%' }}
               />
           </div>
       </div>
@@ -223,39 +235,72 @@ function Historial() {
       {cargando ? (
           <div className="tb-loading">Cargando tablero...</div>
       ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', minHeight: '600px', overflowX: 'auto' }}>
-              
-              {/* COLUMNA 1: ACTIVAS */}
-              <div style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '15px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e40af', margin: '0 0 15px 0', borderBottom: '2px solid #bfdbfe', paddingBottom: '10px' }}>
-                      <Wrench size={20}/> Activas ({activas.length})
-                  </h3>
-                  <div style={{ flex: 1, overflowY: 'auto' }}>
-                      {activas.length === 0 ? <p style={{ color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Sin órdenes activas</p> : activas.map(renderCard)}
-                  </div>
-              </div>
+          <>
+            {/* Pestañas para navegación rápida en Mobile */}
+            <div className="kanban-mobile-tabs" role="tablist" aria-label="Columnas de órdenes">
+              <button 
+                type="button" 
+                role="tab"
+                aria-selected={columnaMobile === 'activas'}
+                onClick={() => setColumnaMobile('activas')}
+                className={`kanban-tab-btn ${columnaMobile === 'activas' ? 'active-activas' : ''}`}
+              >
+                <Wrench size={16} /> Activas ({activas.length})
+              </button>
+              <button 
+                type="button" 
+                role="tab"
+                aria-selected={columnaMobile === 'finalizadas'}
+                onClick={() => setColumnaMobile('finalizadas')}
+                className={`kanban-tab-btn ${columnaMobile === 'finalizadas' ? 'active-finalizadas' : ''}`}
+              >
+                <Car size={16} /> Listas ({finalizadas.length})
+              </button>
+              <button 
+                type="button" 
+                role="tab"
+                aria-selected={columnaMobile === 'entregadas'}
+                onClick={() => setColumnaMobile('entregadas')}
+                className={`kanban-tab-btn ${columnaMobile === 'entregadas' ? 'active-entregadas' : ''}`}
+              >
+                <History size={16} /> Historial ({entregadas.length})
+              </button>
+            </div>
 
-              {/* COLUMNA 2: FINALIZADAS */}
-              <div style={{ backgroundColor: '#f0fdf4', borderRadius: '12px', padding: '15px', border: '1px solid #bbf7d0', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', margin: '0 0 15px 0', borderBottom: '2px solid #86efac', paddingBottom: '10px' }}>
-                      <Car size={20}/> Finalizadas ({finalizadas.length})
-                  </h3>
-                  <div style={{ flex: 1, overflowY: 'auto' }}>
-                      {finalizadas.length === 0 ? <p style={{ color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Sin órdenes listas</p> : finalizadas.map(renderCard)}
-                  </div>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', minHeight: '500px' }}>
+                
+                {/* COLUMNA 1: ACTIVAS */}
+                <div className={columnaMobile !== 'activas' ? 'kanban-col-hidden-mobile' : ''} style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '15px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e40af', margin: '0 0 15px 0', borderBottom: '2px solid #bfdbfe', paddingBottom: '10px' }}>
+                        <Wrench size={20}/> Activas ({activas.length})
+                    </h3>
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {activas.length === 0 ? <p style={{ color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Sin órdenes activas</p> : activas.map(renderCard)}
+                    </div>
+                </div>
 
-              {/* COLUMNA 3: ENTREGADAS (HISTORIAL) */}
-              <div style={{ backgroundColor: '#f1f5f9', borderRadius: '12px', padding: '15px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column' }}>
-                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', margin: '0 0 15px 0', borderBottom: '2px solid #94a3b8', paddingBottom: '10px' }}>
-                      <History size={20}/> Entregadas / Historial ({entregadas.length})
-                  </h3>
-                  <div style={{ flex: 1, overflowY: 'auto' }}>
-                      {entregadas.length === 0 ? <p style={{ color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Sin historial</p> : entregadas.map(renderCard)}
-                  </div>
-              </div>
+                {/* COLUMNA 2: FINALIZADAS */}
+                <div className={columnaMobile !== 'finalizadas' ? 'kanban-col-hidden-mobile' : ''} style={{ backgroundColor: '#f0fdf4', borderRadius: '12px', padding: '15px', border: '1px solid #bbf7d0', display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', margin: '0 0 15px 0', borderBottom: '2px solid #86efac', paddingBottom: '10px' }}>
+                        <Car size={20}/> Finalizadas ({finalizadas.length})
+                    </h3>
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {finalizadas.length === 0 ? <p style={{ color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Sin órdenes listas</p> : finalizadas.map(renderCard)}
+                    </div>
+                </div>
 
-          </div>
+                {/* COLUMNA 3: ENTREGADAS (HISTORIAL) */}
+                <div className={columnaMobile !== 'entregadas' ? 'kanban-col-hidden-mobile' : ''} style={{ backgroundColor: '#f1f5f9', borderRadius: '12px', padding: '15px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569', margin: '0 0 15px 0', borderBottom: '2px solid #94a3b8', paddingBottom: '10px' }}>
+                        <History size={20}/> Entregadas / Historial ({entregadas.length})
+                    </h3>
+                    <div style={{ flex: 1, overflowY: 'auto' }}>
+                        {entregadas.length === 0 ? <p style={{ color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>Sin historial</p> : entregadas.map(renderCard)}
+                    </div>
+                </div>
+
+            </div>
+          </>
       )}
 
       {/* Paginación global para el tablero */}

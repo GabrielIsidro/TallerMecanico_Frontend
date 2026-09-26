@@ -187,7 +187,7 @@ function Cotizador() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.3fr', gap: '30px' }}>
+        <div className="responsive-grid-2">
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* SELECCIÓN DE VEHÍCULO */}
@@ -203,7 +203,7 @@ function Cotizador() {
                     setPresupuesto(null);
                 }}
                 className="tb-select"
-                style={{ cursor: 'pointer', border: '2px solid #3b82f6' }} 
+                style={{ cursor: 'pointer', border: '2px solid #3b82f6', minHeight: '44px' }} 
               >
                 <option value="">-- Buscar y seleccionar vehículo --</option>
                 {vehiculos.map(v => (
@@ -219,7 +219,7 @@ function Cotizador() {
               <h3 className="tb-title" style={{ color: '#1e40af', marginBottom: '15px', fontSize: '1.2em' }}>
                 <MessageSquare size={20}/> 2. Datos del Ingreso
               </h3>
-              <div style={{ padding: '0 20px 20px 20px' }}>
+              <div>
                   <label className="tb-label">Motivo de Ingreso / Falla:</label>
                   <textarea 
                       value={descripcionIngreso}
@@ -235,7 +235,7 @@ function Cotizador() {
                       onChange={(e) => setKilometraje(e.target.value)}
                       className="tb-input"
                       placeholder="Ej: 150000"
-                      style={{ border: '1px solid #cbd5e1', width: '50%' }}
+                      style={{ border: '1px solid #cbd5e1', maxWidth: '240px', width: '100%' }}
                   />
               </div>
             </div>
@@ -301,17 +301,23 @@ function Cotizador() {
                         <li key={index} style={{ padding: '12px 0', borderBottom: '1px solid #f1f5f9' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                                 <div style={{ fontSize: '0.95em', color:'#334155', fontWeight: 'bold' }}>{item.nombre}</div>
-                                <button className="tb-btn-icon tb-btn-delete" style={{ padding: '4px', background: 'transparent', color: '#ef4444' }} onClick={() => quitarDelCarrito(index)}>
-                                    <Trash2 size={16}/>
+                                <button 
+                                  className="tb-btn-icon tb-btn-delete" 
+                                  style={{ minWidth: '38px', minHeight: '38px', padding: '6px', background: 'transparent', color: '#ef4444' }} 
+                                  onClick={() => quitarDelCarrito(index)}
+                                  aria-label={`Eliminar ${item.nombre} de la orden`}
+                                >
+                                    <Trash2 size={18}/>
                                 </button>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{ fontSize: '0.9em', color: '#64748b' }}>Precio: $</span>
                                 <input 
                                     type="number"
                                     value={item.precioEstimado}
                                     onChange={(e) => actualizarPrecioCarrito(index, e.target.value)}
-                                    style={{ padding: '4px 8px', border: '1px solid #94a3b8', borderRadius: '4px', width: '100px', fontWeight: 'bold', color: '#166534' }}
+                                    style={{ padding: '6px 10px', border: '1px solid #94a3b8', borderRadius: '6px', width: '110px', fontWeight: 'bold', color: '#166534', minHeight: '38px', fontSize: '15px' }}
+                                    aria-label={`Precio para ${item.nombre}`}
                                 />
                                 <Edit2 size={14} color="#94a3b8"/>
                             </div>
@@ -333,7 +339,10 @@ function Cotizador() {
                     style={{
                       width: '100%', 
                       background: esSoloLectura ? '#94a3b8' : '#10b981', 
-                      padding: '12px',
+                      padding: '14px',
+                      minHeight: '48px',
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
                       cursor: esSoloLectura ? 'not-allowed' : 'pointer'
                     }}
                   >

@@ -98,39 +98,39 @@ const Inventario = () => {
   if (cargando) return <div className="tb-loading" style={{ padding: '30px' }}>Cargando inventario...</div>;
 
   return (
-    <div className="tb-container" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="tb-container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
       
       {/* HEADER */}
-      <div className="tb-header" style={{ marginBottom: '30px' }}>
+      <div className="tb-header" style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
         <div>
-          <h1 className="tb-title" style={{ fontSize: '2.5rem' }}>
-            <PackageSearch size={40} color="#3b82f6" /> Inventario
+          <h1 className="tb-title" style={{ fontSize: 'clamp(1.5rem, 4vw, 2.2rem)' }}>
+            <PackageSearch size={36} color="#3b82f6" /> Inventario
           </h1>
-          <p className="tb-subtitle" style={{ fontSize: '1.1rem' }}>Gestioná tus repuestos y recibí alertas de stock.</p>
+          <p className="tb-subtitle" style={{ fontSize: '1rem' }}>Gestioná tus repuestos y recibí alertas de stock.</p>
         </div>
         <button 
           onClick={() => { limpiarForm(); setMostrarForm(!mostrarForm); }}
           className="tb-btn-add"
-          style={{ padding: '12px 24px', borderRadius: '12px' }}
+          style={{ padding: '12px 20px', borderRadius: '12px', minHeight: '44px', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
           {mostrarForm ? 'Cerrar Formulario' : <><Plus size={20} /> Nuevo Repuesto</>}
         </button>
       </div>
 
       {/* KPIS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginBottom: '30px' }}>
-        <div style={{ background: 'white', padding: '25px', borderRadius: '20px', borderLeft: '5px solid #3b82f6', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: 0, color: '#64748b', fontSize: '1rem', textTransform: 'uppercase' }}>Artículos Totales</h3>
-          <p style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: 'bold', color: '#1e293b' }}>{repuestos.length}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '25px' }}>
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '5px solid #3b82f6', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase' }}>Artículos Totales</h3>
+          <p style={{ margin: '8px 0 0 0', fontSize: 'clamp(1.8rem, 4vw, 2.3rem)', fontWeight: 'bold', color: '#1e293b' }}>{repuestos.length}</p>
         </div>
-        <div style={{ background: 'white', padding: '25px', borderRadius: '20px', borderLeft: '5px solid #10b981', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: 0, color: '#64748b', fontSize: '1rem', textTransform: 'uppercase' }}>Valor Invertido</h3>
-          <p style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: 'bold', color: '#10b981' }}>${totalInvertido.toLocaleString()}</p>
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '5px solid #10b981', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase' }}>Valor Invertido</h3>
+          <p style={{ margin: '8px 0 0 0', fontSize: 'clamp(1.8rem, 4vw, 2.3rem)', fontWeight: 'bold', color: '#10b981' }}>${totalInvertido.toLocaleString()}</p>
         </div>
-        <div style={{ background: 'white', padding: '25px', borderRadius: '20px', borderLeft: '5px solid #ef4444', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: 0, color: '#64748b', fontSize: '1rem', textTransform: 'uppercase' }}>Alertas de Stock</h3>
-          <p style={{ margin: '10px 0 0 0', fontSize: '2.5rem', fontWeight: 'bold', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {repuestosBajos} {repuestosBajos > 0 && <AlertTriangle size={30} />}
+        <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '5px solid #ef4444', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: 0, color: '#64748b', fontSize: '0.9rem', textTransform: 'uppercase' }}>Alertas de Stock</h3>
+          <p style={{ margin: '8px 0 0 0', fontSize: 'clamp(1.8rem, 4vw, 2.3rem)', fontWeight: 'bold', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {repuestosBajos} {repuestosBajos > 0 && <AlertTriangle size={26} />}
           </p>
         </div>
       </div>
@@ -142,25 +142,25 @@ const Inventario = () => {
           <form onSubmit={guardarRepuesto} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', alignItems: 'end' }}>
             <div>
               <label className="tb-label">Nombre / Descripción *</label>
-              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="tb-input" placeholder="Filtro de Aceite" required />
+              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="tb-input" placeholder="Filtro de Aceite" style={{ minHeight: '40px' }} required />
             </div>
             <div>
               <label className="tb-label">SKU (Opcional)</label>
-              <input type="text" value={sku} onChange={e => setSku(e.target.value)} className="tb-input" placeholder="COD-123" />
+              <input type="text" value={sku} onChange={e => setSku(e.target.value)} className="tb-input" placeholder="COD-123" style={{ minHeight: '40px' }} />
             </div>
             <div>
               <label className="tb-label">Cantidad Actual *</label>
-              <input type="number" value={cantidad} onChange={e => setCantidad(Number(e.target.value))} className="tb-input" min="0" required />
+              <input type="number" value={cantidad} onChange={e => setCantidad(Number(e.target.value))} className="tb-input" min="0" style={{ minHeight: '40px' }} required />
             </div>
             <div>
               <label className="tb-label">Stock Mínimo *</label>
-              <input type="number" value={stockMinimo} onChange={e => setStockMinimo(Number(e.target.value))} className="tb-input" min="1" required />
+              <input type="number" value={stockMinimo} onChange={e => setStockMinimo(Number(e.target.value))} className="tb-input" min="1" style={{ minHeight: '40px' }} required />
             </div>
             <div>
               <label className="tb-label">Precio Unitario *</label>
-              <input type="number" value={precio} onChange={e => setPrecio(Number(e.target.value))} className="tb-input" min="0" step="0.01" required />
+              <input type="number" value={precio} onChange={e => setPrecio(Number(e.target.value))} className="tb-input" min="0" step="0.01" style={{ minHeight: '40px' }} required />
             </div>
-            <button type="submit" className="tb-btn-save" style={{ height: '46px' }}>
+            <button type="submit" className="tb-btn-save" style={{ height: '44px', minHeight: '44px' }}>
               {editandoId ? 'Guardar Cambios' : 'Registrar'}
             </button>
           </form>
@@ -180,11 +180,11 @@ const Inventario = () => {
             <table className="tb-table">
               <thead className="tb-thead">
                 <tr>
-                  <th className="tb-th" style={{ padding: '20px' }}>Detalle del Producto</th>
-                  <th className="tb-th tb-th-center" style={{ padding: '20px' }}>Cantidad</th>
-                  <th className="tb-th" style={{ padding: '20px' }}>Precio</th>
-                  <th className="tb-th tb-th-center" style={{ padding: '20px' }}>Estado</th>
-                  <th className="tb-th tb-th-center" style={{ padding: '20px' }}>Acciones</th>
+                  <th className="tb-th" style={{ padding: '16px' }}>Detalle del Producto</th>
+                  <th className="tb-th tb-th-center" style={{ padding: '16px' }}>Cantidad</th>
+                  <th className="tb-th" style={{ padding: '16px' }}>Precio</th>
+                  <th className="tb-th tb-th-center" style={{ padding: '16px' }}>Estado</th>
+                  <th className="tb-th tb-th-center" style={{ padding: '16px' }}>Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,26 +192,26 @@ const Inventario = () => {
                   const bajoStock = r.cantidad <= r.stockMinimo;
                   return (
                     <tr key={r.id} className="tb-tr">
-                      <td className="tb-td" style={{ padding: '20px' }}>
-                        <div className="tb-td-primary" style={{ fontSize: '1.1rem' }}>{r.nombre}</div>
+                      <td className="tb-td" style={{ padding: '16px' }}>
+                        <div className="tb-td-primary" style={{ fontSize: '1rem' }}>{r.nombre}</div>
                         <div className="tb-td-muted" style={{ fontSize: '0.85rem' }}>SKU: {r.sku || 'N/A'}</div>
                       </td>
-                      <td className="tb-td tb-td-center" style={{ padding: '20px' }}>
+                      <td className="tb-td tb-td-center" style={{ padding: '16px' }}>
                         <span style={{ 
                           background: bajoStock ? '#fef2f2' : '#f0fdf4',
                           color: bajoStock ? '#ef4444' : '#166534',
-                          padding: '5px 15px',
+                          padding: '4px 12px',
                           borderRadius: '20px',
                           fontWeight: 'bold',
-                          fontSize: '1.2rem'
+                          fontSize: '1.1rem'
                         }}>
                           {r.cantidad}
                         </span>
                       </td>
-                      <td className="tb-td" style={{ padding: '20px', fontWeight: 'bold', color: '#334155' }}>
+                      <td className="tb-td" style={{ padding: '16px', fontWeight: 'bold', color: '#334155' }}>
                         ${r.precio.toLocaleString()}
                       </td>
-                      <td className="tb-td tb-td-center" style={{ padding: '20px' }}>
+                      <td className="tb-td tb-td-center" style={{ padding: '16px' }}>
                         {bajoStock ? (
                           <span style={{ color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '0.9rem', fontWeight: 'bold' }}>
                             <AlertTriangle size={16} /> Reabastecer
@@ -222,14 +222,28 @@ const Inventario = () => {
                           </span>
                         )}
                       </td>
-                      <td className="tb-td tb-td-center" style={{ padding: '20px' }}>
-                        <div className="tb-actions">
-                          <button onClick={() => editarRepuesto(r)} className="tb-btn-icon tb-btn-edit"><Edit3 size={18} /></button>
-                          <button onClick={() => eliminarRepuesto(r.id)} className="tb-btn-icon tb-btn-delete"><Trash2 size={18} /></button>
+                      <td className="tb-td tb-td-center" style={{ padding: '16px' }}>
+                        <div className="tb-actions" style={{ justifyContent: 'center', gap: '8px' }}>
+                          <button 
+                            onClick={() => editarRepuesto(r)} 
+                            className="tb-btn-icon tb-btn-edit"
+                            style={{ minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            aria-label={`Editar ${r.nombre}`}
+                          >
+                            <Edit3 size={18} />
+                          </button>
+                          <button 
+                            onClick={() => eliminarRepuesto(r.id)} 
+                            className="tb-btn-icon tb-btn-delete"
+                            style={{ minWidth: '36px', minHeight: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            aria-label={`Eliminar ${r.nombre}`}
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>

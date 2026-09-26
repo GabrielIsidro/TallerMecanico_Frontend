@@ -6,8 +6,6 @@ import {
   Search, 
   Edit, 
   Trash2, 
-  Info, 
-  HelpCircle, 
   CheckCircle, 
   FileText, 
   AlertTriangle, 
@@ -28,7 +26,6 @@ function Vehiculos() {
   const [modoEdicion, setModoEdicion] = useState(false)
   const [idEditar, setIdEditar] = useState(null)
   const [busqueda, setBusqueda] = useState('')
-  const [mostrarAyudaCat, setMostrarAyudaCat] = useState(false)
 
   const [nuevoAuto, setNuevoAuto] = useState({
     patente: '',
@@ -41,15 +38,10 @@ function Vehiculos() {
     cliente: null
   })
 
-  useEffect(() => {
-    cargarVehiculos()
-    cargarClientes()
-  }, [])
-
   const cargarVehiculos = () => {
     getVehiculos()
       .then(res => setVehiculos(res.data))
-      .catch(err => {
+      .catch(() => {
         toast.error("Error al conectar con el servidor. Revisa si el Back está prendido.");
       })
   }
@@ -59,6 +51,11 @@ function Vehiculos() {
       .then(res => setClientes(res.data.content || res.data || []))
       .catch(err => console.error(err))
   }
+
+  useEffect(() => {
+    cargarVehiculos()
+    cargarClientes()
+  }, [])
 
   const manejarGuardado = () => {
     if (esSoloLectura) {
@@ -178,15 +175,17 @@ function Vehiculos() {
           background: '#fef2f2',
           border: '1px solid #fca5a5',
           color: '#b91c1c',
-          padding: '12px 18px',
+          padding: '14px 18px',
           borderRadius: '10px',
           marginBottom: '20px',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          gap: '12px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <AlertTriangle size={20} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 260px' }}>
+            <AlertTriangle size={20} style={{ flexShrink: 0 }} />
             <span><strong>Modo Solo Lectura:</strong> Tu suscripción ha vencido. Podés consultar los vehículos pero no registrar ni modificarlos.</span>
           </div>
           <button 
@@ -195,10 +194,11 @@ function Vehiculos() {
               background: '#ef4444',
               color: 'white',
               border: 'none',
-              padding: '6px 14px',
-              borderRadius: '6px',
+              padding: '8px 16px',
+              borderRadius: '8px',
               cursor: 'pointer',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              minHeight: '40px'
             }}
           >
             Regularizar Plan
@@ -216,15 +216,15 @@ function Vehiculos() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
           <div style={{ gridColumn: '1 / -1' }}>
               <label className="tb-label">👤 Dueño del Auto:</label>
-              <select className="tb-select" value={nuevoAuto.cliente ? nuevoAuto.cliente.id : ""} onChange={handleClienteChange}>
+              <select className="tb-select" value={nuevoAuto.cliente ? nuevoAuto.cliente.id : ""} onChange={handleClienteChange} style={{ minHeight: '42px' }}>
                   <option value="">-- Seleccionar Cliente --</option>
                   {clientes.map(c => <option key={c.id} value={c.id}>{c.nombreCliente}</option>)}
               </select>
           </div>
 
-          <div><label className="tb-label">Patente</label><input value={nuevoAuto.patente} onChange={e => setNuevoAuto({...nuevoAuto, patente: e.target.value})} className="tb-input" /></div>
-          <div><label className="tb-label">Marca</label><input value={nuevoAuto.marca} onChange={e => setNuevoAuto({...nuevoAuto, marca: e.target.value})} className="tb-input" /></div>
-          <div><label className="tb-label">Modelo</label><input value={nuevoAuto.modelo} onChange={e => setNuevoAuto({...nuevoAuto, modelo: e.target.value})} className="tb-input" /></div>
+          <div><label className="tb-label">Patente</label><input value={nuevoAuto.patente} onChange={e => setNuevoAuto({...nuevoAuto, patente: e.target.value})} className="tb-input" style={{ minHeight: '40px' }} /></div>
+          <div><label className="tb-label">Marca</label><input value={nuevoAuto.marca} onChange={e => setNuevoAuto({...nuevoAuto, marca: e.target.value})} className="tb-input" style={{ minHeight: '40px' }} /></div>
+          <div><label className="tb-label">Modelo</label><input value={nuevoAuto.modelo} onChange={e => setNuevoAuto({...nuevoAuto, modelo: e.target.value})} className="tb-input" style={{ minHeight: '40px' }} /></div>
 
 
           <div style={{ borderTop: '1px dashed #cbd5e1', gridColumn: '1 / -1', margin: '10px 0', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -232,17 +232,18 @@ function Vehiculos() {
               <strong style={{color: '#475569'}}>Tarjeta Verde y Control de Service</strong>
           </div>
 
-          <div><label className="tb-label">N° Motor</label><input placeholder="Ej: FMB123..." value={nuevoAuto.numeroMotor} onChange={e => setNuevoAuto({...nuevoAuto, numeroMotor: e.target.value})} className="tb-input" /></div>
-          <div><label className="tb-label">N° Chasis / VIN</label><input placeholder="Ej: 8AD123..." value={nuevoAuto.numeroChasis} onChange={e => setNuevoAuto({...nuevoAuto, numeroChasis: e.target.value})} className="tb-input" /></div>
-          <div><label className="tb-label" style={{color: '#1d4ed8'}}>Próximo Service (KM)</label><input type="number" placeholder="Ej: 160000" value={nuevoAuto.proximoServiceKm} onChange={e => setNuevoAuto({...nuevoAuto, proximoServiceKm: e.target.value})} className="tb-input" style={{border: '2px solid #93c5fd', backgroundColor: '#eff6ff'}} /></div>
+          <div><label className="tb-label">N° Motor</label><input placeholder="Ej: FMB123..." value={nuevoAuto.numeroMotor} onChange={e => setNuevoAuto({...nuevoAuto, numeroMotor: e.target.value})} className="tb-input" style={{ minHeight: '40px' }} /></div>
+          <div><label className="tb-label">N° Chasis / VIN</label><input placeholder="Ej: 8AD123..." value={nuevoAuto.numeroChasis} onChange={e => setNuevoAuto({...nuevoAuto, numeroChasis: e.target.value})} className="tb-input" style={{ minHeight: '40px' }} /></div>
+          <div><label className="tb-label" style={{color: '#1d4ed8'}}>Próximo Service (KM)</label><input type="number" placeholder="Ej: 160000" value={nuevoAuto.proximoServiceKm} onChange={e => setNuevoAuto({...nuevoAuto, proximoServiceKm: e.target.value})} className="tb-input" style={{border: '2px solid #93c5fd', backgroundColor: '#eff6ff', minHeight: '40px'}} /></div>
 
-          <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <div style={{ gridColumn: '1 / -1', display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
               <button 
                 onClick={manejarGuardado} 
                 disabled={esSoloLectura}
                 className="tb-btn-save" 
                 style={{ 
-                  flex: 1, 
+                  flex: '1 1 200px', 
+                  minHeight: '44px',
                   display: 'flex', 
                   justifyContent: 'center', 
                   alignItems: 'center', 
@@ -254,17 +255,17 @@ function Vehiculos() {
                 <CheckCircle size={18} color="white"/>
                 {modoEdicion ? 'Actualizar Vehículo' : 'Guardar Vehículo'}
               </button>
-              {modoEdicion && <button onClick={terminarEdicion} className="tb-btn-cancel" style={{ flex: 1 }}>Cancelar</button>}
+              {modoEdicion && <button onClick={terminarEdicion} className="tb-btn-cancel" style={{ flex: '1 1 120px', minHeight: '44px' }}>Cancelar</button>}
           </div>
         </div>
       </div>
 
       {/* TABLA CON BUSCADOR PROFESIONAL */}
       <div className="tb-card" style={{ padding: '25px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+        <div className="responsive-search-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '12px' }}>
             <h3 className="tb-title" style={{ fontSize: '1.2em' }}>🚗 Flota Registrada</h3>
             
-            <div style={{ position: 'relative', width: '300px' }}>
+            <div className="responsive-search-box" style={{ position: 'relative', width: '300px' }}>
                 <Search size={18} className="tb-filter-icon" />
                 <input 
                     type="text" 
@@ -272,7 +273,7 @@ function Vehiculos() {
                     value={busqueda}
                     onChange={e => setBusqueda(e.target.value)}
                     className="tb-input"
-                    style={{ paddingLeft: '38px', border: '2px solid #3b82f6' }}
+                    style={{ paddingLeft: '38px', border: '2px solid #3b82f6', minHeight: '40px' }}
                 />
             </div>
         </div>
@@ -313,17 +314,23 @@ function Vehiculos() {
                             <div><strong>Chasis:</strong> {v.numeroChasis || '-'}</div>
                         </td>
                         <td className="tb-td" style={{ textAlign: 'right' }}>
-                            <div className="tb-actions" style={{ justifyContent: 'flex-end' }}>
+                            <div className="tb-actions" style={{ justifyContent: 'flex-end', gap: '8px' }}>
                               <button 
                                 className="tb-btn-icon" 
                                 style={{ 
                                   background: '#f59e0b', 
                                   color: 'white', 
+                                  minWidth: '36px',
+                                  minHeight: '36px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
                                   opacity: esSoloLectura ? 0.4 : 1, 
                                   cursor: esSoloLectura ? 'not-allowed' : 'pointer' 
                                 }} 
                                 onClick={() => iniciarEdicion(v)} 
                                 title={esSoloLectura ? "Modo solo lectura" : "Editar"}
+                                aria-label={`Editar vehículo ${v.patente}`}
                               >
                                   <Edit size={16} color="white"/>
                               </button>
@@ -332,11 +339,17 @@ function Vehiculos() {
                                 style={{ 
                                   background: '#ef4444', 
                                   color: 'white', 
+                                  minWidth: '36px',
+                                  minHeight: '36px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
                                   opacity: esSoloLectura ? 0.4 : 1, 
                                   cursor: esSoloLectura ? 'not-allowed' : 'pointer' 
                                 }} 
                                 onClick={() => eliminarVehiculo(v.id)} 
                                 title={esSoloLectura ? "Modo solo lectura" : "Borrar"}
+                                aria-label={`Eliminar vehículo ${v.patente}`}
                               >
                                   <Trash2 size={16} color="white"/>
                               </button>
